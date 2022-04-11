@@ -13,41 +13,34 @@ function MyComponent() {
   });
   return null;
 }
-const Controls = () => {
-  useState();
-  useEffect(() => {}, []);
-  return (
-    <div style={{ height: "100vh", width: "40%" }}>
-      <h2>Controls</h2>
-      <form>
-        <select name="" id=""></select>
-      </form>
-    </div>
-  );
-};
+
 const Map = () => {
   const DUMMY_LIST = [
     { Type: "Light Sensor", Longtitude: 250, Latitude: 250 },
     { Type: "Fire Sensor", Longtitude: 0, Latitude: 0 },
   ];
-  const imgSrc = process.env.PUBLIC_URL + "/RVPS - FP01.png";
   const [initialPosition, setInitialPosition] = useState([0, 0]);
   const [selectedPosition, setSelectedPosition] = useState([0, 0]);
+  const [imageSrc, setImageSrc] = useState("");
   const [imageWidth, setImageWidth] = useState(0);
   const [imageHeight, setImageHeight] = useState(0);
   const [amountOfFloors, setAmountOfFloors] = useState(0);
+  const [selectedFloor, setSelectedFloor] = useState(1);
 
   useEffect(() => {
-    //fetch db
     setAmountOfFloors(5);
   }, []);
 
   useEffect(() => {
     const img = new Image();
+    const imgSrc = process.env.PUBLIC_URL + `/RVPS - FP0${selectedFloor}.png`;
     img.src = imgSrc;
     setImageWidth(img.width);
     setImageHeight(img.height);
-  }, [imgSrc]);
+    setImageSrc(imgSrc);
+  }, [selectedFloor]);
+
+  useEffect(() => {}, [imageSrc]);
 
   useEffect(() => {
     navigator.geolocation.getCurrentPosition((position) => {
@@ -56,29 +49,25 @@ const Map = () => {
     });
   }, []);
 
-  // const Markers = () => {
-  //   const map = useMapEvents({
-  //     click(e) {
-  //       setSelectedPosition([e.latlng.lat, e.latlng.lng]);
-  //     },
-  //   });
+  const onFloorChange = (e) => {
+    setSelectedFloor(e.target.value);
+  };
 
-  //   return selectedPosition ? (
-  //     <Marker
-  //       key={selectedPosition[0]}
-  //       position={selectedPosition}
-  //       interactive={false}
-  //     />
-  //   ) : null;
-  // };
-
+  let FloorControls = [];
+  for (var i = 1; i <= amountOfFloors; i++) {
+    FloorControls.push(
+      <option key={i} value={i}>
+        Floor {i}
+      </option>
+    );
+  }
   return (
     <div style={{ display: "flex", width: "100%" }}>
       <div style={{ height: "100vh", width: "40%" }}>
         <h2>Controls</h2>
         <form>
-          <select name="" id="">
-            {amountOfFloors.map(floorNumber => )}
+          <select name="" id="" onChange={onFloorChange}>
+            {FloorControls.map((x) => x)}
           </select>
         </form>
       </div>
@@ -88,7 +77,12 @@ const Map = () => {
         zoom={1}
         crs={CRS.Simple}
         center={[0, 0]}
-        style={{ height: "100vh", width: "60%" }}
+        style={{
+          height: "100vh",
+          width: "60%",
+          background: "white",
+          border: "2px solid black",
+        }}
         maxBounds={
           new LatLngBounds([
             [0, 500],
@@ -96,12 +90,13 @@ const Map = () => {
           ])
         }>
         <ImageOverlay
-          url={imgSrc}
+          url={imageSrc}
           bounds={[
             [500, 0],
             [0, 500],
           ]}
           center={[0, 0]}
+          style={{ background: "white", border: "2px solid black" }}
         />
         <MyComponent />
         {DUMMY_LIST.map((x, index) => (
