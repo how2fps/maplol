@@ -1,25 +1,47 @@
 import "leaflet-boundary-canvas";
 import "leaflet/dist/leaflet.css";
 
-import L from "leaflet";
+import L, { latLng } from "leaflet";
 import markerIconPng from "leaflet/dist/images/marker-icon.png";
 import React, { useEffect, useState } from "react";
-import { MapContainer } from "react-leaflet";
+import { MapContainer, Marker, Popup } from "react-leaflet";
+import { useNavigate } from "react-router-dom";
+import Select from "react-select";
 
-import singaporeGSON from "./SGPGSON.json";
+import singaporeGSON from "./SingaporeGSON.json";
 
 const DUMMY_LIST = [
-  { id: 1, name: "Rivervale Primary School" },
-  { id: 2, name: "St Hilda's Secondary School" },
-  { id: 3, name: "Temasek Polytechnic" },
-  { id: 4, name: "Admiralty Secondary School" },
+  {
+    id: 1,
+    name: "Rivervale Primary School",
+    latLng: [1.3933354326156981, 103.90432935346726],
+  },
+  {
+    id: 2,
+    name: "St Hilda's Secondary School",
+    latLng: [1.350392486863309, 103.9361580344195],
+  },
+  {
+    id: 3,
+    name: "Temasek Polytechnic",
+    latLng: [1.3454239941475783, 103.93249097861609],
+  },
+  {
+    id: 4,
+    name: "Admiralty Secondary School",
+    latLng: [1.4466534139615155, 103.80259746881106],
+  },
 ];
 
 export default function SingaporeMap() {
   const [schools, setSchools] = useState([]);
-  const [schoolsFiltered, setSchoolsFiltered] = useState([]);
-  const position = [1.352083, 103.819839];
+  const position = [1.352083, 103.819839]; //center of SG
   const [map, setMap] = useState(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    setSchools(DUMMY_LIST);
+  }, []);
 
   useEffect(() => {
     if (!map) return;
@@ -29,7 +51,7 @@ export default function SingaporeMap() {
         {
           boundary: singaporeGSON,
           attribution:
-            '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors, UK shape <a href="https://github.com/johan/world.geo.json">johan/word.geo.json</a>',
+            '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a>',
         }
       );
       map.addLayer(osm);
@@ -39,25 +61,53 @@ export default function SingaporeMap() {
     fetchGeoJSON();
   }, [map]);
 
-  useEffect(() => {
-    setSchools(DUMMY_LIST);
-  }, []);
+  // const onSearchHandler = (e) => {
+  //   e.preventDefault();
+  //   const searchValue = e.target.value;
+  //   console.log(searchValue);
+  //   setSchoolsFiltered([
+  //     ...schools.filter((x) => x.name.toLowerCase().includes(searchValue)),
+  //   ]);
+  // };
+  const toDetailsHandler = (schoolName) => {
+    navigate(schoolName);
+  };
 
   const onSearchHandler = (e) => {
-    const searchValue = e.target.value;
-    setSchoolsFiltered([
-      ...schools.filter((x) => x.name.toLowerCase().includes(searchValue)),
-    ]);
+    var latLng = e.value;
+    var markerBounds = L.latLngBounds([latLng]);
+    map.fitBounds([[0, 0]]); //to reset map or close by schools fitBounds act weird
+    map.fitBounds(markerBounds);
+    // var latlngPoint = new L.LatLng(
+    //   parseFloat(latLng[0]),
+    //   parseFloat(latLng[1])
+    // );
+    // L.popup().setLatLng(latlngPoint).setContent(popupContent(e)).openOn(map);
   };
+
   return (
-    <div style={{ display: "flex", flex: "row" }}>
-      <div>
-        <form action="">
+    <div style={{ display: "flex", flex: "row", width: "100%" }}>
+      <div style={{ padding: "20px", width: "40%" }}>
+        {/* <form onSubmit={onSearchHandler}>
           <input type="text" onChange={onSearchHandler} />
         </form>
         {schoolsFiltered.map((school) => {
-          return <div key={school.id}>{school.name}</div>;
-        })}
+          return (
+            <div
+              onClick={onClickHandler}
+              style={{ border: "2px solid black", cursor: "pointer" }}
+              key={school.id}>
+              {school.name}
+            </div>
+          );
+        })} */}
+        <Select
+          style={{ width: "100%" }}
+          options={schools.map((school) => {
+            return { value: school.latLng, label: school.name };
+          })}
+          onChange={onSearchHandler}
+        />
       </div>
       <MapContainer
         center={position}
@@ -72,13 +122,28 @@ export default function SingaporeMap() {
         }}
         whenCreated={setMap}
         maxBounds={L.geoJSON(singaporeGSON).getBounds()}
-        maxBoundsViscosity={0.7}></MapContainer>
-      {/* <TileLayer
-          maxZoom={19}
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        /> */}
-      {/* </MapContainer> */}
+        maxBoundsViscosity={0.2}>
+        {DUMMY_LIST.map((x, index) => (
+          <Marker
+            key={index}
+            position={x.latLng}
+            icon={
+              new L.Icon({
+                iconUrl: markerIconPng,
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+              })
+            }>
+            <Popup>
+              {x.name} <br></br>
+              <button
+                onClick={() => toDetailsHandler(x.name.split(" ").join(""))}>
+                More Info
+              </button>
+            </Popup>
+          </Marker>
+        ))}
+      </MapContainer>
     </div>
   );
 }
