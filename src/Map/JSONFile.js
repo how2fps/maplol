@@ -1,29 +1,10 @@
 import "react-sortable-tree/style.css";
 
 import { Icon } from "@material-ui/core";
-import _ from "lodash";
 import React, { useEffect, useState } from "react";
-import { Scrollbars } from "react-custom-scrollbars";
 
 import data from "./rivervale.json";
-import { graphQL } from "./rivervale.json";
-import {
-  DeviceArea,
-  DeviceBarArea,
-  DeviceBarCounter,
-  DeviceBarCounterArea,
-  DeviceBarLabel,
-  DeviceHeader,
-  DeviceHeaderCollapse,
-  DeviceHeaderIcon,
-  DeviceHeaderTitle,
-  DeviceMessage,
-  DeviceTreeArea,
-  MySortableTree,
-  TreeNodeIcon,
-  TreeNodeSensorCounter,
-  TreeNodeWarningCounter,
-} from "./styled.js";
+import { MySortableTree, TreeNodeIcon, TreeNodeSensorCounter } from "./styled.js";
 
 let countHolder = 0;
 
@@ -35,10 +16,10 @@ function DeviceManagement(props) {
 
   useEffect(() => {
     let newGraphQL = data;
-    console.log(data);
     newGraphQL = JSON.parse(
       JSON.stringify(newGraphQL).split('"uri"').join('"title"')
     );
+    console.log(newGraphQL);
     newGraphQL = JSON.parse(
       JSON.stringify(newGraphQL).split('"ns0__islocationof"').join('"children"')
     );
@@ -48,7 +29,14 @@ function DeviceManagement(props) {
     newGraphQL = JSON.parse(
       JSON.stringify(newGraphQL).split('"ns0__haspoint"').join('"children"')
     );
-    console.log(newGraphQL);
+    newGraphQL = JSON.parse(
+      JSON.stringify(newGraphQL)
+        .split('"ns0__hasassociatedtag"')
+        .join('"location"')
+    );
+    newGraphQL = JSON.parse(
+      JSON.stringify(newGraphQL).split('"ns0__hasValue"').join('"coordinates"')
+    );
     setTotalDevices(getTotalCountByLevel(newGraphQL));
     // setTotalWarning(getWarningCountByLevel(newGraphQL));
     setTreeData(newGraphQL);
@@ -137,34 +125,34 @@ function DeviceManagement(props) {
     }
   };
 
-  const renderThumb = ({ style, ...props }) => {
-    const thumbStyle = {
-      backgroundColor: `#a8a9b1
-            `,
-      borderRadius: `0.5rem`,
-    };
-    return <div style={{ ...style, ...thumbStyle }} {...props} />;
-  };
+  // const renderThumb = ({ style, ...props }) => {
+  //   const thumbStyle = {
+  //     backgroundColor: `#a8a9b1
+  //           `,
+  //     borderRadius: `0.5rem`,
+  //   };
+  //   return <div style={{ ...style, ...thumbStyle }} {...props} />;
+  // };
 
-  const isCharacterALetter = (char) => {
-    return /[a-zA-Z]/.test(char);
-  };
+  // const isCharacterALetter = (char) => {
+  //   return /[a-zA-Z]/.test(char);
+  // };
 
-  const splitProperCase = (data) => {
-    if (data.length > 0) {
-      let newData = data[0];
-      for (let i = 1; i < data.length; i++) {
-        if (isCharacterALetter(data[i])) {
-          if (data[i] === data[i].toUpperCase()) {
-            if (data[i + 1]) newData += " ";
-          }
-        }
-        newData += data[i];
-      }
-      return newData;
-    }
-    return data;
-  };
+  // const splitProperCase = (data) => {
+  //   if (data.length > 0) {
+  //     let newData = data[0];
+  //     for (let i = 1; i < data.length; i++) {
+  //       if (isCharacterALetter(data[i])) {
+  //         if (data[i] === data[i].toUpperCase()) {
+  //           if (data[i + 1]) newData += " ";
+  //         }
+  //       }
+  //       newData += data[i];
+  //     }
+  //     return newData;
+  //   }
+  //   return data;
+  // };
 
   const getTitleFromJSON = (node) => {
     let title = node.title;

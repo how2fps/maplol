@@ -3,16 +3,165 @@ import "react-sortable-tree/style.css";
 
 import L, { CRS, Icon, LatLngBounds } from "leaflet";
 import markerIconPng from "leaflet/dist/images/marker-icon.png";
-import React, { Component } from "react";
 import { useEffect, useState } from "react";
 import { ImageOverlay, MapContainer, Marker, Popup, useMapEvents } from "react-leaflet";
 import { useLocation, useNavigate } from "react-router-dom";
 import Select from "react-select";
-import SortableTree from "react-sortable-tree";
 
+import DeviceManagement from "./JSONFile";
 import RivervaleJSON from "./rivervale.json";
 
 export const SCHOOL_DUMMY_LIST = [
+  {
+    id: 1,
+    name: "Rivervale Primary School",
+    latLng: [1.3933354326156981, 103.90432935346726],
+  },
+  {
+    id: 2,
+    name: "St Hilda's Secondary School",
+    latLng: [1.350392486863309, 103.9361580344195],
+  },
+  {
+    id: 3,
+    name: "Temasek Polytechnic",
+    latLng: [1.3454239941475783, 103.93249097861609],
+  },
+  {
+    id: 4,
+    name: "Admiralty Secondary School",
+    latLng: [1.4466534139615155, 103.80259746881106],
+  },
+  {
+    id: 5,
+    name: "Jurong Primary School",
+    latLng: [1.3486575472899138, 103.73291689579524],
+  },
+  {
+    id: 1,
+    name: "Rivervale Primary School",
+    latLng: [1.3933354326156981, 103.90432935346726],
+  },
+  {
+    id: 2,
+    name: "St Hilda's Secondary School",
+    latLng: [1.350392486863309, 103.9361580344195],
+  },
+  {
+    id: 3,
+    name: "Temasek Polytechnic",
+    latLng: [1.3454239941475783, 103.93249097861609],
+  },
+  {
+    id: 4,
+    name: "Admiralty Secondary School",
+    latLng: [1.4466534139615155, 103.80259746881106],
+  },
+  {
+    id: 5,
+    name: "Jurong Primary School",
+    latLng: [1.3486575472899138, 103.73291689579524],
+  },
+  {
+    id: 1,
+    name: "Rivervale Primary School",
+    latLng: [1.3933354326156981, 103.90432935346726],
+  },
+  {
+    id: 2,
+    name: "St Hilda's Secondary School",
+    latLng: [1.350392486863309, 103.9361580344195],
+  },
+  {
+    id: 3,
+    name: "Temasek Polytechnic",
+    latLng: [1.3454239941475783, 103.93249097861609],
+  },
+  {
+    id: 4,
+    name: "Admiralty Secondary School",
+    latLng: [1.4466534139615155, 103.80259746881106],
+  },
+  {
+    id: 5,
+    name: "Jurong Primary School",
+    latLng: [1.3486575472899138, 103.73291689579524],
+  },
+  {
+    id: 1,
+    name: "Rivervale Primary School",
+    latLng: [1.3933354326156981, 103.90432935346726],
+  },
+  {
+    id: 2,
+    name: "St Hilda's Secondary School",
+    latLng: [1.350392486863309, 103.9361580344195],
+  },
+  {
+    id: 3,
+    name: "Temasek Polytechnic",
+    latLng: [1.3454239941475783, 103.93249097861609],
+  },
+  {
+    id: 4,
+    name: "Admiralty Secondary School",
+    latLng: [1.4466534139615155, 103.80259746881106],
+  },
+  {
+    id: 5,
+    name: "Jurong Primary School",
+    latLng: [1.3486575472899138, 103.73291689579524],
+  },
+  {
+    id: 1,
+    name: "Rivervale Primary School",
+    latLng: [1.3933354326156981, 103.90432935346726],
+  },
+  {
+    id: 2,
+    name: "St Hilda's Secondary School",
+    latLng: [1.350392486863309, 103.9361580344195],
+  },
+  {
+    id: 3,
+    name: "Temasek Polytechnic",
+    latLng: [1.3454239941475783, 103.93249097861609],
+  },
+  {
+    id: 4,
+    name: "Admiralty Secondary School",
+    latLng: [1.4466534139615155, 103.80259746881106],
+  },
+  {
+    id: 5,
+    name: "Jurong Primary School",
+    latLng: [1.3486575472899138, 103.73291689579524],
+  },
+  {
+    id: 1,
+    name: "Rivervale Primary School",
+    latLng: [1.3933354326156981, 103.90432935346726],
+  },
+  {
+    id: 2,
+    name: "St Hilda's Secondary School",
+    latLng: [1.350392486863309, 103.9361580344195],
+  },
+  {
+    id: 3,
+    name: "Temasek Polytechnic",
+    latLng: [1.3454239941475783, 103.93249097861609],
+  },
+  {
+    id: 4,
+    name: "Admiralty Secondary School",
+    latLng: [1.4466534139615155, 103.80259746881106],
+  },
+  {
+    id: 5,
+    name: "Jurong Primary School",
+    latLng: [1.3486575472899138, 103.73291689579524],
+  },
   {
     id: 1,
     name: "Rivervale Primary School",
@@ -58,6 +207,7 @@ const Map = () => {
   const navigate = useNavigate();
   const { state } = useLocation();
 
+  const [map, setMap] = useState(null);
   const [json, setJson] = useState(RivervaleJSON);
   const [imageSrc, setImageSrc] = useState("");
   const [imageWidth, setImageWidth] = useState(0);
@@ -85,6 +235,14 @@ const Map = () => {
     setImageWidth(img.width);
     setImageHeight(img.height);
     setImageSrc(imgSrc);
+    if (!map) return;
+    const fetchGeoJSON = async () => {
+      const osm = L.TileLayer.boundaryCanvas();
+      L.map.imageSrc = imgSrc;
+    };
+    fetchGeoJSON();
+    if (state) onSearchHandler(state);
+    window.history.replaceState({}, document.title);
   }, [selectedFloor]);
 
   const onSearchHandler = (e) => {
@@ -121,28 +279,14 @@ const Map = () => {
             {FloorControls.map((x) => x)}
           </select>
         </form>
-        <SortableTree
-          treeData={[
-            {
-              title: "Resource:ns0__Site",
-              uri: "https://bahbahbahexample/RivervalePriSchool",
-            },
-            {
-              type: "Resource:ns0__Site",
-              uri: "https://bahbahbahexample/RivervalePriSchool",
-              children: [{ title: "Egg" }],
-            },
-          ]}
-          onChange={(state) => console.log("hi")}
-          isVirtualized={false}
-        />
+        <DeviceManagement />
       </div>
       <MapContainer
         maxZoom={7}
         minZoom={0.5}
         zoom={1}
         crs={CRS.Simple}
-        center={[0, 0]}
+        center={[state.value[0], state.value[1]]}
         style={{
           height: "100vh",
           width: "60%",
@@ -151,15 +295,15 @@ const Map = () => {
         }}
         maxBounds={
           new LatLngBounds([
-            [0, 500],
-            [500, 0],
+            [0, 250],
+            [250, 0],
           ])
         }>
         <ImageOverlay
           url={imageSrc}
           bounds={[
-            [500, 0],
-            [0, 500],
+            [250, 0],
+            [0, 250],
           ]}
           center={[0, 0]}
           style={{ background: "white", border: "2px solid black" }}

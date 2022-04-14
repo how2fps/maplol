@@ -54,8 +54,9 @@ export default function SingaporeMap() {
     setSelectedSchool(e);
     var latLng = e.value;
     var markerBounds = L.latLngBounds([latLng]);
-    map.fitBounds([[0, 0]]); //to reset map or close by schools fitBounds act weird
-    map.fitBounds(markerBounds);
+    map.flyTo(latLng, 15);
+    // map.fitBounds([[0, 0]]); //to reset map or close by schools fitBounds act weird
+    // map.fitBounds(markerBounds);
   };
 
   return (
@@ -68,9 +69,9 @@ export default function SingaporeMap() {
           })}
           onChange={onSearchHandler}
           value={selectedSchool}
-          openMenuOnFocus
-          defaultMenuIsOpen
           menuIsOpen
+          minMenuHeight={"10vh"}
+          maxMenuHeight={"40vh"}
         />
       </div>
       <MapContainer
