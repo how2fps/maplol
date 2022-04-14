@@ -44,6 +44,36 @@ function DeviceManagement(props) {
 
   const onNodeClick = (nodeInfo) => {
     console.log(nodeInfo);
+    let location;
+    let coordinates;
+    if (nodeInfo.node.hasOwnProperty("location")) {
+      location = nodeInfo.node.location;
+      if (location[0].hasOwnProperty("coordinates")) {
+        coordinates = location[0].coordinates[0];
+
+        //to solve errors found in JSON so it's parseable
+        coordinates = coordinates
+          .split("'BottomRightLat: ")
+          .join("'BottomRightLat': ");
+        coordinates = coordinates.split(", ,").join(",");
+        coordinates = coordinates.split(",}").join("}");
+
+        coordinates = JSON.parse(coordinates.split("'").join('"'));
+        if (coordinates.Type === "AreaCoordinate") {
+          const UpperLeftLong = coordinates.UpperLeftLong;
+          const UpperLeftLat = coordinates.UpperLeftLat;
+          const BottomRightLong = coordinates.BottomRightLong;
+          const BottomRightLat = coordinates.BottomRightLat;
+          props.plotMarkerOnClick(
+            UpperLeftLong,
+            UpperLeftLat,
+            BottomRightLong,
+            BottomRightLat
+          );
+          //function that plots 2 points
+        }
+      }
+    }
   };
   const getFullPath = (path) => {
     let pathTitleArray = [];

@@ -37,156 +37,6 @@ export const SCHOOL_DUMMY_LIST = [
     name: "Jurong Primary School",
     latLng: [1.3486575472899138, 103.73291689579524],
   },
-  {
-    id: 1,
-    name: "Rivervale Primary School",
-    latLng: [1.3933354326156981, 103.90432935346726],
-  },
-  {
-    id: 2,
-    name: "St Hilda's Secondary School",
-    latLng: [1.350392486863309, 103.9361580344195],
-  },
-  {
-    id: 3,
-    name: "Temasek Polytechnic",
-    latLng: [1.3454239941475783, 103.93249097861609],
-  },
-  {
-    id: 4,
-    name: "Admiralty Secondary School",
-    latLng: [1.4466534139615155, 103.80259746881106],
-  },
-  {
-    id: 5,
-    name: "Jurong Primary School",
-    latLng: [1.3486575472899138, 103.73291689579524],
-  },
-  {
-    id: 1,
-    name: "Rivervale Primary School",
-    latLng: [1.3933354326156981, 103.90432935346726],
-  },
-  {
-    id: 2,
-    name: "St Hilda's Secondary School",
-    latLng: [1.350392486863309, 103.9361580344195],
-  },
-  {
-    id: 3,
-    name: "Temasek Polytechnic",
-    latLng: [1.3454239941475783, 103.93249097861609],
-  },
-  {
-    id: 4,
-    name: "Admiralty Secondary School",
-    latLng: [1.4466534139615155, 103.80259746881106],
-  },
-  {
-    id: 5,
-    name: "Jurong Primary School",
-    latLng: [1.3486575472899138, 103.73291689579524],
-  },
-  {
-    id: 1,
-    name: "Rivervale Primary School",
-    latLng: [1.3933354326156981, 103.90432935346726],
-  },
-  {
-    id: 2,
-    name: "St Hilda's Secondary School",
-    latLng: [1.350392486863309, 103.9361580344195],
-  },
-  {
-    id: 3,
-    name: "Temasek Polytechnic",
-    latLng: [1.3454239941475783, 103.93249097861609],
-  },
-  {
-    id: 4,
-    name: "Admiralty Secondary School",
-    latLng: [1.4466534139615155, 103.80259746881106],
-  },
-  {
-    id: 5,
-    name: "Jurong Primary School",
-    latLng: [1.3486575472899138, 103.73291689579524],
-  },
-  {
-    id: 1,
-    name: "Rivervale Primary School",
-    latLng: [1.3933354326156981, 103.90432935346726],
-  },
-  {
-    id: 2,
-    name: "St Hilda's Secondary School",
-    latLng: [1.350392486863309, 103.9361580344195],
-  },
-  {
-    id: 3,
-    name: "Temasek Polytechnic",
-    latLng: [1.3454239941475783, 103.93249097861609],
-  },
-  {
-    id: 4,
-    name: "Admiralty Secondary School",
-    latLng: [1.4466534139615155, 103.80259746881106],
-  },
-  {
-    id: 5,
-    name: "Jurong Primary School",
-    latLng: [1.3486575472899138, 103.73291689579524],
-  },
-  {
-    id: 1,
-    name: "Rivervale Primary School",
-    latLng: [1.3933354326156981, 103.90432935346726],
-  },
-  {
-    id: 2,
-    name: "St Hilda's Secondary School",
-    latLng: [1.350392486863309, 103.9361580344195],
-  },
-  {
-    id: 3,
-    name: "Temasek Polytechnic",
-    latLng: [1.3454239941475783, 103.93249097861609],
-  },
-  {
-    id: 4,
-    name: "Admiralty Secondary School",
-    latLng: [1.4466534139615155, 103.80259746881106],
-  },
-  {
-    id: 5,
-    name: "Jurong Primary School",
-    latLng: [1.3486575472899138, 103.73291689579524],
-  },
-  {
-    id: 1,
-    name: "Rivervale Primary School",
-    latLng: [1.3933354326156981, 103.90432935346726],
-  },
-  {
-    id: 2,
-    name: "St Hilda's Secondary School",
-    latLng: [1.350392486863309, 103.9361580344195],
-  },
-  {
-    id: 3,
-    name: "Temasek Polytechnic",
-    latLng: [1.3454239941475783, 103.93249097861609],
-  },
-  {
-    id: 4,
-    name: "Admiralty Secondary School",
-    latLng: [1.4466534139615155, 103.80259746881106],
-  },
-  {
-    id: 5,
-    name: "Jurong Primary School",
-    latLng: [1.3486575472899138, 103.73291689579524],
-  },
 ];
 
 const DUMMY_LIST = [
@@ -237,9 +87,10 @@ const Map = () => {
     setImageSrc(imgSrc);
     if (!map) return;
     const fetchGeoJSON = async () => {
-      const osm = L.TileLayer.boundaryCanvas();
+      // const osm = L.TileLayer.boundaryCanvas();
       L.map.imageSrc = imgSrc;
     };
+
     fetchGeoJSON();
     if (state) onSearchHandler(state);
     window.history.replaceState({}, document.title);
@@ -261,6 +112,15 @@ const Map = () => {
       </option>
     );
   }
+
+  const plotMarkerOnClick = (ulLat, ulLong, blLat, blLong) => {
+    L.rectangle([
+      [ulLat, ulLong],
+      [blLat, blLong],
+      { color: "Red", weight: 1 },
+    ]).addTo(map);
+  };
+
   return (
     <div style={{ display: "flex", flex: "row", width: "100%" }}>
       <div style={{ padding: "20px", width: "40%" }}>
@@ -279,7 +139,7 @@ const Map = () => {
             {FloorControls.map((x) => x)}
           </select>
         </form>
-        <DeviceManagement />
+        <DeviceManagement plotMarkerOnClick={plotMarkerOnClick} />
       </div>
       <MapContainer
         maxZoom={7}
@@ -295,15 +155,16 @@ const Map = () => {
         }}
         maxBounds={
           new LatLngBounds([
-            [0, 250],
-            [250, 0],
+            [0, 500],
+            [500, 0],
           ])
-        }>
+        }
+        whenCreated={setMap}>
         <ImageOverlay
           url={imageSrc}
           bounds={[
-            [250, 0],
-            [0, 250],
+            [500, 0],
+            [0, 500],
           ]}
           center={[0, 0]}
           style={{ background: "white", border: "2px solid black" }}
