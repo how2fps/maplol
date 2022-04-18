@@ -26,7 +26,7 @@ export default function SingaporeMap() {
       const osm = L.TileLayer.boundaryCanvas(
         "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
         {
-          boundary: singaporeGSON,
+          // boundary: singaporeGSON,
           attribution:
             '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a>',
         }

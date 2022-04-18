@@ -9,7 +9,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import Select from "react-select";
 
 import DeviceManagement from "./JSONFile";
-import RivervaleJSON from "./rivervale.json";
+import data from "./rivervale.json";
 
 export const SCHOOL_DUMMY_LIST = [
   {
@@ -58,7 +58,6 @@ const Map = () => {
   const { state } = useLocation();
 
   const [map, setMap] = useState(null);
-  const [json, setJson] = useState(RivervaleJSON);
   const [imageSrc, setImageSrc] = useState("");
   const [imageWidth, setImageWidth] = useState(0);
   const [imageHeight, setImageHeight] = useState(0);
@@ -66,16 +65,28 @@ const Map = () => {
   const [selectedFloor, setSelectedFloor] = useState(1);
   const [selectedSchool, setSelectedSchool] = useState(null);
   const [schools, setSchools] = useState([]);
+  const [schoolData, setSchoolData] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    console.log(RivervaleJSON);
+    setIsLoading(true);
     setSchools(SCHOOL_DUMMY_LIST);
-    setAmountOfFloors(5);
+    setSchoolData(data);
+    const arrayOfDifferentBuildings = data[0].ns0__islocationof;
+    const floorBuildings = arrayOfDifferentBuildings
+      .map((x) => {
+        if (x.ns0__islocationof) {
+          return x.ns0__islocationof;
+        }
+      })
+      .filter((x) => x !== undefined);
+    const lengths = floorBuildings.map((a) => a.length);
+    setAmountOfFloors(Math.max(...lengths));
     if (state) {
-      console.log(state);
       setSelectedSchool(state);
     }
     window.history.replaceState({}, document.title);
+    setIsLoading(false);
   }, []);
 
   useEffect(() => {
@@ -93,7 +104,7 @@ const Map = () => {
 
     fetchGeoJSON();
     // if (state) onSearchHandler(state);
-    window.history.replaceState({}, document.title);
+    // window.history.replaceState({}, document.title);
   }, [selectedFloor]);
 
   const onSearchHandler = (e) => {
@@ -101,7 +112,15 @@ const Map = () => {
   };
 
   const onFloorChange = (e) => {
-    setSelectedFloor(e.target.value);
+    setSelectedFloor(e.value.key);
+  };
+
+  const plotMarkerOnClick = (ulLat, ulLong, blLat, blLong) => {
+    L.rectangle([
+      [ulLat, ulLong],
+      [blLat, blLong],
+      { color: "Red", weight: 1 },
+    ]).addTo(map);
   };
 
   let FloorControls = [];
@@ -113,85 +132,93 @@ const Map = () => {
     );
   }
 
-  const plotMarkerOnClick = (ulLat, ulLong, blLat, blLong) => {
-    L.rectangle([
-      [ulLat, ulLong],
-      [blLat, blLong],
-      { color: "Red", weight: 1 },
-    ]).addTo(map);
-  };
-
   return (
-    <div style={{ display: "flex", flex: "row", width: "100%" }}>
-      <div style={{ padding: "20px", width: "40%" }}>
-        <Select
-          style={{ width: "100%" }}
-          options={schools.map((school) => {
-            return { value: school.latLng, label: school.name };
-          })}
-          onChange={onSearchHandler}
-          value={selectedSchool}
-          isOptionSelected={true}
-        />
-        <h2>Controls</h2>
-        <form>
-          <select name="" id="" onChange={onFloorChange}>
-            {FloorControls.map((x) => x)}
-          </select>
-        </form>
-        <DeviceManagement
-          plotMarkerOnClick={plotMarkerOnClick}
-          selectedFloor={selectedFloor}
-        />
-      </div>
-      <MapContainer
-        maxZoom={7}
-        minZoom={0.5}
-        zoom={1}
-        crs={CRS.Simple}
-        center={[0, 0]}
-        style={{
-          height: "100vh",
-          width: "60%",
-          background: "white",
-          border: "2px solid black",
-        }}
-        maxBounds={
-          new LatLngBounds([
-            [0, 500],
-            [500, 0],
-          ])
-        }
-        whenCreated={setMap}>
-        <ImageOverlay
-          url={imageSrc}
-          bounds={[
-            [500, 0],
-            [0, 500],
-          ]}
-          center={[0, 0]}
-          style={{ background: "white", border: "2px solid black" }}
-        />
-        <MyComponent />
-        {DUMMY_LIST.map((x, index) => (
-          <Marker
-            key={index}
-            position={[x.Longtitude, x.Latitude]}
-            icon={
-              new Icon({
-                iconUrl: markerIconPng,
-                iconSize: [25, 41],
-                iconAnchor: [12, 41],
-              })
-            }>
-            <Popup>
-              {x.Type} <br></br>
-              <button>More Info</button>
-            </Popup>
-          </Marker>
-        ))}
-      </MapContainer>
-    </div>
+    <>
+      {!isLoading && schoolData ? (
+        <div style={{ display: "flex", flex: "row", width: "100%" }}>
+          <div style={{ padding: "20px", width: "40%" }}>
+            <h2>Schools</h2>
+            <Select
+              style={{ width: "100%" }}
+              options={schools.map((school) => {
+                return { value: school.latLng, label: school.name };
+              })}
+              onChange={onSearchHandler}
+              value={selectedSchool}
+              isOptionSelected={true}
+            />
+            <h2>Floors</h2>
+            <Select
+              style={{ width: "100%" }}
+              options={FloorControls.map((floor) => {
+                return { value: floor, label: floor };
+              })}
+              defaultValue={
+                FloorControls.map((floor) => {
+                  return { value: floor, label: floor };
+                })[0]
+              }
+              onChange={onFloorChange}
+              isOptionSelected={true}
+            />
+            <DeviceManagement
+              plotMarkerOnClick={plotMarkerOnClick}
+              selectedFloor={selectedFloor}
+              schoolData={schoolData}
+            />
+          </div>
+          <MapContainer
+            maxZoom={7}
+            minZoom={0.5}
+            zoom={1}
+            crs={CRS.Simple}
+            center={[0, 0]}
+            style={{
+              height: "80vh",
+              width: "60%",
+              background: "white",
+              border: "2px solid black",
+            }}
+            maxBounds={
+              new LatLngBounds([
+                [0, 500],
+                [500, 0],
+              ])
+            }
+            whenCreated={setMap}>
+            <ImageOverlay
+              url={imageSrc}
+              bounds={[
+                [500, 0],
+                [0, 500],
+              ]}
+              center={[0, 0]}
+              style={{ background: "white", border: "2px solid black" }}
+            />
+            <MyComponent />
+            {DUMMY_LIST.map((x, index) => (
+              <Marker
+                key={index}
+                position={[x.Longtitude, x.Latitude]}
+                icon={
+                  new Icon({
+                    iconUrl: markerIconPng,
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                  })
+                }>
+                <Popup>
+                  {x.Type} <br></br>
+                  <button>More Info</button>
+                </Popup>
+              </Marker>
+            ))}
+          </MapContainer>
+        </div>
+      ) : (
+        <div></div>
+      )}
+    </>
   );
 };
 export default Map;

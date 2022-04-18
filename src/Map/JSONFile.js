@@ -3,7 +3,6 @@ import "react-sortable-tree/style.css";
 import { Icon } from "@material-ui/core";
 import React, { useEffect, useState } from "react";
 
-import data from "./rivervale.json";
 import { MySortableTree, TreeNodeIcon, TreeNodeSensorCounter } from "./styled.js";
 
 let countHolder = 0;
@@ -15,8 +14,7 @@ function DeviceManagement(props) {
   const [totalDevices, setTotalDevices] = useState(0);
 
   useEffect(() => {
-    let newGraphQL = data;
-    console.log(newGraphQL);
+    let newGraphQL = props.schoolData;
     newGraphQL = JSON.parse(
       JSON.stringify(newGraphQL).split('"uri"').join('"title"')
     );
@@ -43,7 +41,7 @@ function DeviceManagement(props) {
   }, []);
 
   useEffect(() => {
-    const arrayOfDifferentBuildings = data[0].ns0__islocationof;
+    const arrayOfDifferentBuildings = props.schoolData[0].ns0__islocationof;
     const floorBuildings = arrayOfDifferentBuildings.map((x) => {
       if (x.ns0__islocationof) {
         return x.ns0__islocationof.filter((y) => {
@@ -55,7 +53,6 @@ function DeviceManagement(props) {
       (x) => x !== undefined
     );
     let floorBuildingsFixed = filteredUndefineFloorBuilding.map((x) => x[0]);
-    console.log(floorBuildingsFixed);
     floorBuildingsFixed = JSON.parse(
       JSON.stringify(floorBuildingsFixed).split('"uri"').join('"title"')
     );
@@ -121,6 +118,7 @@ function DeviceManagement(props) {
       }
     }
   };
+
   const getFullPath = (path) => {
     let pathTitleArray = [];
     let pathObject = treeData;
