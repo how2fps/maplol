@@ -1,13 +1,17 @@
 import "react-sortable-tree/style.css";
 
 import { Icon } from "@material-ui/core";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import useScrollOnDrag from "react-scroll-ondrag";
 
 import { MySortableTree, TreeNodeIcon, TreeNodeSensorCounter } from "./styled.js";
 
 let countHolder = 0;
 
 function DeviceManagement(props) {
+  const ref = useRef();
+  const { events } = useScrollOnDrag(ref);
+
   const { showDevice, hideDevice, expandDevice } = props;
   const [treeData, setTreeData] = useState([]);
   const [totalWarning, setTotalWarning] = useState(0);
@@ -271,39 +275,47 @@ function DeviceManagement(props) {
   };
 
   return (
-    <MySortableTree
-      canDrag={false}
-      style={{ color: "black", overflow: "scroll" }}
-      isVirtualized={false}
-      treeData={treeData}
-      onChange={(treeData) => setTreeData(treeData)}
-      scaffoldBlockPxWidth={20}
-      generateNodeProps={(nodeInfo) => ({
-        title: getTitleFromJSON(nodeInfo.node),
-        onClick: () => onNodeClick(nodeInfo),
-        buttons: [
-          getGraphObjectType(nodeInfo.node) === "Location" && (
-            <TreeNodeSensorCounter>
-              {getTotalCountByLevel(nodeInfo.node)}
-            </TreeNodeSensorCounter>
-          ),
-          getGraphObjectType(nodeInfo.node) === "Equipment"
-            ? [
-                <TreeNodeIcon>
-                  <Icon style={{ color: "#31C3FF" }}>sensors</Icon>
-                </TreeNodeIcon>,
-              ]
-            : [],
-          getGraphObjectType(nodeInfo.node) === "Point"
-            ? [
-                <TreeNodeIcon>
-                  <Icon style={{ color: "#FFC74D" }}>speed</Icon>
-                </TreeNodeIcon>,
-              ]
-            : [],
-        ],
-      })}
-    />
+    <div
+      {...events}
+      ref={ref}
+      style={{
+        overflow: "scroll",
+        maxHeight: "600px",
+        margin: "20px 0 20px 0",
+      }}>
+      <MySortableTree
+        canDrag={false}
+        isVirtualized={false}
+        treeData={treeData}
+        onChange={(treeData) => setTreeData(treeData)}
+        scaffoldBlockPxWidth={44}
+        generateNodeProps={(nodeInfo) => ({
+          title: getTitleFromJSON(nodeInfo.node),
+          onClick: () => onNodeClick(nodeInfo),
+          buttons: [
+            getGraphObjectType(nodeInfo.node) === "Location" && (
+              <TreeNodeSensorCounter>
+                {getTotalCountByLevel(nodeInfo.node)}
+              </TreeNodeSensorCounter>
+            ),
+            getGraphObjectType(nodeInfo.node) === "Equipment"
+              ? [
+                  <TreeNodeIcon>
+                    <Icon style={{ color: "#31C3FF" }}>sensors</Icon>
+                  </TreeNodeIcon>,
+                ]
+              : [],
+            getGraphObjectType(nodeInfo.node) === "Point"
+              ? [
+                  <TreeNodeIcon>
+                    <Icon style={{ color: "#FFC74D" }}>speed</Icon>
+                  </TreeNodeIcon>,
+                ]
+              : [],
+          ],
+        })}
+      />
+    </div>
   );
 }
 

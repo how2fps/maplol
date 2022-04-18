@@ -62,6 +62,7 @@ export default function SingaporeMap() {
   return (
     <div style={{ display: "flex", flex: "row", width: "100%" }}>
       <div style={{ padding: "20px", width: "40%" }}>
+        <h2>Schools</h2>
         <Select
           style={{ width: "100%" }}
           options={schools.map((school) => {
