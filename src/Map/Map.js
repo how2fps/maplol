@@ -62,7 +62,7 @@ const Map = () => {
   const [imageSrc, setImageSrc] = useState("");
   const [imageWidth, setImageWidth] = useState(0);
   const [imageHeight, setImageHeight] = useState(0);
-  const [amountOfFloors, setAmountOfFloors] = useState(0);
+  const [amountOfFloors, setAmountOfFloors] = useState(1);
   const [selectedFloor, setSelectedFloor] = useState(1);
   const [selectedSchool, setSelectedSchool] = useState(null);
   const [schools, setSchools] = useState([]);
@@ -75,7 +75,7 @@ const Map = () => {
       console.log(state);
       setSelectedSchool(state);
     }
-    // window.history.replaceState({}, document.title);
+    window.history.replaceState({}, document.title);
   }, []);
 
   useEffect(() => {
@@ -92,7 +92,7 @@ const Map = () => {
     };
 
     fetchGeoJSON();
-    if (state) onSearchHandler(state);
+    // if (state) onSearchHandler(state);
     window.history.replaceState({}, document.title);
   }, [selectedFloor]);
 
@@ -139,14 +139,17 @@ const Map = () => {
             {FloorControls.map((x) => x)}
           </select>
         </form>
-        <DeviceManagement plotMarkerOnClick={plotMarkerOnClick} />
+        <DeviceManagement
+          plotMarkerOnClick={plotMarkerOnClick}
+          selectedFloor={selectedFloor}
+        />
       </div>
       <MapContainer
         maxZoom={7}
         minZoom={0.5}
         zoom={1}
         crs={CRS.Simple}
-        center={[state.value[0], state.value[1]]}
+        center={[0, 0]}
         style={{
           height: "100vh",
           width: "60%",

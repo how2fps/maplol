@@ -16,10 +16,10 @@ function DeviceManagement(props) {
 
   useEffect(() => {
     let newGraphQL = data;
+    console.log(newGraphQL);
     newGraphQL = JSON.parse(
       JSON.stringify(newGraphQL).split('"uri"').join('"title"')
     );
-    console.log(newGraphQL);
     newGraphQL = JSON.parse(
       JSON.stringify(newGraphQL).split('"ns0__islocationof"').join('"children"')
     );
@@ -41,6 +41,52 @@ function DeviceManagement(props) {
     // setTotalWarning(getWarningCountByLevel(newGraphQL));
     setTreeData(newGraphQL);
   }, []);
+
+  useEffect(() => {
+    const arrayOfDifferentBuildings = data[0].ns0__islocationof;
+    const floorBuildings = arrayOfDifferentBuildings.map((x) => {
+      if (x.ns0__islocationof) {
+        return x.ns0__islocationof.filter((y) => {
+          return y.uri.includes(`floor_${props.selectedFloor}`);
+        });
+      }
+    });
+    const filteredUndefineFloorBuilding = floorBuildings.filter(
+      (x) => x !== undefined
+    );
+    let floorBuildingsFixed = filteredUndefineFloorBuilding.map((x) => x[0]);
+    console.log(floorBuildingsFixed);
+    floorBuildingsFixed = JSON.parse(
+      JSON.stringify(floorBuildingsFixed).split('"uri"').join('"title"')
+    );
+    floorBuildingsFixed = JSON.parse(
+      JSON.stringify(floorBuildingsFixed)
+        .split('"ns0__islocationof"')
+        .join('"children"')
+    );
+    floorBuildingsFixed = JSON.parse(
+      JSON.stringify(floorBuildingsFixed)
+        .split('"ns0__haslocation"')
+        .join('"children"')
+    );
+    floorBuildingsFixed = JSON.parse(
+      JSON.stringify(floorBuildingsFixed)
+        .split('"ns0__haspoint"')
+        .join('"children"')
+    );
+    floorBuildingsFixed = JSON.parse(
+      JSON.stringify(floorBuildingsFixed)
+        .split('"ns0__hasassociatedtag"')
+        .join('"location"')
+    );
+    floorBuildingsFixed = JSON.parse(
+      JSON.stringify(floorBuildingsFixed)
+        .split('"ns0__hasValue"')
+        .join('"coordinates"')
+    );
+    setTotalDevices(getTotalCountByLevel(floorBuildingsFixed));
+    setTreeData(floorBuildingsFixed);
+  }, [props.selectedFloor]);
 
   const onNodeClick = (nodeInfo) => {
     console.log(nodeInfo);
@@ -229,10 +275,11 @@ function DeviceManagement(props) {
   return (
     <MySortableTree
       canDrag={false}
-      style={{ color: "black" }}
+      style={{ color: "black", overflow: "scroll" }}
       isVirtualized={false}
       treeData={treeData}
       onChange={(treeData) => setTreeData(treeData)}
+      scaffoldBlockPxWidth={20}
       generateNodeProps={(nodeInfo) => ({
         title: getTitleFromJSON(nodeInfo.node),
         onClick: () => onNodeClick(nodeInfo),
