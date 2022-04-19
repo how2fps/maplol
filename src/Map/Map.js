@@ -8,6 +8,7 @@ import { ImageOverlay, MapContainer, Marker, Popup, useMapEvents } from "react-l
 import { useLocation, useNavigate } from "react-router-dom";
 import Select from "react-select";
 
+import { computeToPixels, listOfZones } from "./computeToPixels";
 import DeviceManagement from "./JSONFile";
 import data from "./rivervale.json";
 
@@ -39,11 +40,6 @@ export const SCHOOL_DUMMY_LIST = [
   },
 ];
 
-const DUMMY_LIST = [
-  { Type: "Light Sensor", Longtitude: 250, Latitude: 250 },
-  { Type: "Fire Sensor", Longtitude: 0, Latitude: 0 },
-];
-
 function MyComponent() {
   useMapEvents({
     click: (e) => {
@@ -67,12 +63,23 @@ const Map = () => {
   const [schools, setSchools] = useState([]);
   const [schoolData, setSchoolData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [zonesList, setZonesList] = useState([]);
 
   useEffect(() => {
     setIsLoading(true);
     setSchools(SCHOOL_DUMMY_LIST);
     setSchoolData(data);
     const arrayOfDifferentBuildings = data[0].ns0__islocationof;
+    const updatedListOfZones = listOfZones.map((x) => {
+      const updatedCoordinates = computeToPixels({
+        lat: x.lat,
+        long: x.long,
+      });
+      x.lat = updatedCoordinates[0];
+      x.long = updatedCoordinates[1];
+      return x;
+    });
+    setZonesList(updatedListOfZones);
     const floorBuildings = arrayOfDifferentBuildings
       .map((x) => {
         if (x.ns0__islocationof) {
@@ -80,6 +87,7 @@ const Map = () => {
         }
       })
       .filter((x) => x !== undefined);
+
     const lengths = floorBuildings.map((a) => a.length);
     setAmountOfFloors(Math.max(...lengths));
     if (state) {
@@ -88,6 +96,32 @@ const Map = () => {
     window.history.replaceState({}, document.title);
     setIsLoading(false);
   }, []);
+
+  useEffect(() => {
+    //lol;
+    const arrayOfDifferentBuildings = data[0].ns0__islocationof;
+    const floorBuildings = arrayOfDifferentBuildings.map((x) => {
+      if (x.ns0__islocationof) {
+        return x.ns0__islocationof.filter((y) => {
+          return y.uri.includes(`floor_${selectedFloor}`);
+        });
+      }
+    });
+    const filteredUndefineFloorBuilding = floorBuildings.filter(
+      (x) => x !== undefined
+    );
+    let floorBuildingsFixed = filteredUndefineFloorBuilding.map((x) => x[0]);
+
+    let lol = floorBuildingsFixed.map((x) => {
+      if (x.ns0__islocationof) {
+        return x.ns0__islocationof[0].ns0__islocationof;
+      }
+    });
+    lol = lol.filter((x) => x !== undefined);
+    console.log(lol.flat());
+
+    //lol
+  }, [selectedFloor]);
 
   useEffect(() => {
     const img = new Image();
@@ -116,9 +150,11 @@ const Map = () => {
   };
 
   const plotMarkerOnClick = (ulLat, ulLong, blLat, blLong) => {
+    const newUpperCoords = computeToPixels({ lat: ulLat, long: ulLong });
+    const newBottomCoords = computeToPixels({ lat: blLat, long: blLong });
     L.rectangle([
-      [ulLat, ulLong],
-      [blLat, blLong],
+      newUpperCoords,
+      newBottomCoords,
       { color: "Red", weight: 1 },
     ]).addTo(map);
   };
@@ -137,7 +173,7 @@ const Map = () => {
       {!isLoading && schoolData ? (
         <div style={{ display: "flex", flex: "row", width: "100%" }}>
           <div style={{ padding: "20px", width: "40%" }}>
-            <h2>Schools</h2>
+            <h1>Schools</h1>
             <Select
               style={{ width: "100%" }}
               options={schools.map((school) => {
@@ -161,6 +197,7 @@ const Map = () => {
               onChange={onFloorChange}
               isOptionSelected={true}
             />
+            <h2 style={{ marginTop: "20px" }}>Locations and Devices</h2>
             <DeviceManagement
               plotMarkerOnClick={plotMarkerOnClick}
               selectedFloor={selectedFloor}
@@ -174,7 +211,7 @@ const Map = () => {
             crs={CRS.Simple}
             center={[0, 0]}
             style={{
-              height: "80vh",
+              height: "90vh",
               width: "60%",
               background: "white",
               border: "2px solid black",
@@ -196,10 +233,10 @@ const Map = () => {
               style={{ background: "white", border: "2px solid black" }}
             />
             <MyComponent />
-            {DUMMY_LIST.map((x, index) => (
+            {zonesList.map((x, index) => (
               <Marker
                 key={index}
-                position={[x.Longtitude, x.Latitude]}
+                position={[x.lat, x.long]}
                 icon={
                   new Icon({
                     iconUrl: markerIconPng,
@@ -208,7 +245,7 @@ const Map = () => {
                   })
                 }>
                 <Popup>
-                  {x.Type} <br></br>
+                  {x.name} <br></br>
                   <button>More Info</button>
                 </Popup>
               </Marker>
