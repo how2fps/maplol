@@ -63,23 +63,43 @@ const Map = () => {
   const [schools, setSchools] = useState([]);
   const [schoolData, setSchoolData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [zonesList, setZonesList] = useState([]);
+  const [zonesList, setZonesList] = useState(null);
 
   useEffect(() => {
     setIsLoading(true);
     setSchools(SCHOOL_DUMMY_LIST);
     setSchoolData(data);
     const arrayOfDifferentBuildings = data[0].ns0__islocationof;
-    const updatedListOfZones = listOfZones.map((x) => {
+    // const updatedListOfZones = listOfZones.map((x) => {
+    //   const updatedCoordinates = computeToPixels({
+    //     lat: x.lat,
+    //     long: x.long,
+    //   });
+    //   x.lat = updatedCoordinates[0];
+    //   x.long = updatedCoordinates[1];
+    //   return x;
+    // });
+    // setZonesList(updatedListOfZones);
+
+    //
+
+    const list = [
+      { name: "Test 1", long: 103.904698, lat: 1.393119 },
+      { name: "Test 2", long: 103.904764, lat: 1.392965 },
+    ].map((x) => {
       const updatedCoordinates = computeToPixels({
         lat: x.lat,
         long: x.long,
       });
+      // console.log(updatedCoordinates);
       x.lat = updatedCoordinates[0];
       x.long = updatedCoordinates[1];
       return x;
     });
-    setZonesList(updatedListOfZones);
+    setZonesList(list);
+
+    //
+
     const floorBuildings = arrayOfDifferentBuildings
       .map((x) => {
         if (x.ns0__islocationof) {
@@ -98,7 +118,8 @@ const Map = () => {
   }, []);
 
   useEffect(() => {
-    //lol;
+    //Main useEffect to find out all the different zones each floor with updated coords
+    //and the devices each zones have
     const arrayOfDifferentBuildings = data[0].ns0__islocationof;
     const floorBuildings = arrayOfDifferentBuildings.map((x) => {
       if (x.ns0__islocationof) {
@@ -112,15 +133,47 @@ const Map = () => {
     );
     let floorBuildingsFixed = filteredUndefineFloorBuilding.map((x) => x[0]);
 
-    let lol = floorBuildingsFixed.map((x) => {
+    let roomsOnFloor = floorBuildingsFixed.map((x) => {
       if (x.ns0__islocationof) {
         return x.ns0__islocationof[0].ns0__islocationof;
       }
     });
-    lol = lol.filter((x) => x !== undefined);
-    console.log(lol.flat());
+    roomsOnFloor = roomsOnFloor.filter((x) => x !== undefined);
+    roomsOnFloor = roomsOnFloor.flat();
 
-    //lol
+    const locationObjects = roomsOnFloor.map((x) => {
+      const locationObject = JSON.parse(
+        x.ns0__hasassociatedtag[0].ns0__hasValue[0].split("'").join('"')
+      );
+      locationObject.title = x.uri;
+
+      //fixing json for devices
+      locationObject.devices = x.ns0__haslocation.map((device) =>
+        console.log(device)
+      );
+      console.log(locationObject.devices);
+
+      return locationObject;
+    });
+
+    const updatedCoordsObjects = locationObjects.map((x) => {
+      const updatedUpperLeftCoords = computeToPixels({
+        long: x.UpperLeftLong,
+        lat: x.UpperLeftLat,
+      });
+      x.UpperLeftLat = updatedUpperLeftCoords[0];
+      x.UpperLeftLong = updatedUpperLeftCoords[1];
+      const updatedBottomRightCoords = computeToPixels({
+        long: x.BottomRightLong,
+        lat: x.BottomRightLat,
+      });
+      x.BottomRightLat = updatedBottomRightCoords[0];
+      x.BottomRightLong = updatedBottomRightCoords[1];
+      let newTitle = x.title.split("/")[x.title.split("/").length - 1];
+      newTitle = newTitle.replaceAll("_", " ");
+      x.title = newTitle;
+      return x;
+    });
   }, [selectedFloor]);
 
   useEffect(() => {
@@ -206,14 +259,14 @@ const Map = () => {
           </div>
           <MapContainer
             maxZoom={7}
-            minZoom={0.5}
             zoom={1}
+            minZoom={1}
             crs={CRS.Simple}
             center={[0, 0]}
             style={{
               height: "90vh",
               width: "60%",
-              background: "white",
+              background: "grey",
               border: "2px solid black",
             }}
             maxBounds={

@@ -44,9 +44,12 @@ export const computeToPixels = (map) => {
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   const Distance = c * EarthRadius;
   const scaleFactor = 26 / 10;
-  const newX = Distance * Math.cos(AngleBetweenRad) * scaleFactor;
-  const newY = Distance * Math.sin(AngleBetweenRad) * scaleFactor;
-  return [newX, newY];
+
+  let newLat = Distance * Math.cos(AngleBetweenRad) * scaleFactor;
+  newLat = 500 - newLat;
+  const newLong = Distance * Math.sin(AngleBetweenRad) * scaleFactor;
+
+  return [newLat, newLong];
 };
 
 export const listOfZones = [
