@@ -148,11 +148,21 @@ const Map = () => {
       locationObject.title = x.uri;
 
       //fixing json for devices
-      locationObject.devices = x.ns0__haslocation.map((device) =>
-        console.log(device)
-      );
-      console.log(locationObject.devices);
-
+      if (map !== null) {
+        locationObject.devices = x.ns0__haslocation.map((device) => {
+          device.description = JSON.parse(
+            device.ns0__hasTag[0].split("'").join('"')
+          );
+          device.description = device.description.Description;
+          device.location = JSON.parse(
+            device.ns0__hasassociatedtag[0].ns0__hasValue[0]
+              .split("'")
+              .join('"')
+          );
+          // console.log(device);
+          return device;
+        });
+      }
       return locationObject;
     });
 
@@ -174,6 +184,18 @@ const Map = () => {
       x.title = newTitle;
       return x;
     });
+
+    console.log(updatedCoordsObjects);
+    updatedCoordsObjects.map((x) => {
+      if (map) {
+        L.rectangle([
+          [x.UpperLeftLat, x.UpperLeftLong],
+          [x.BottomRightLat, x.BottomRightLong],
+          { color: "Red", weight: 1 },
+        ]).addTo(map);
+      }
+    });
+    setZonesList(updatedCoordsObjects);
   }, [selectedFloor]);
 
   useEffect(() => {
@@ -289,7 +311,10 @@ const Map = () => {
             {zonesList.map((x, index) => (
               <Marker
                 key={index}
-                position={[x.lat, x.long]}
+                position={[
+                  (x.UpperLeftLat + x.BottomRightLat) / 2,
+                  (x.BottomRightLong + x.UpperLeftLong) / 2,
+                ]}
                 icon={
                   new Icon({
                     iconUrl: markerIconPng,
@@ -298,7 +323,7 @@ const Map = () => {
                   })
                 }>
                 <Popup>
-                  {x.name} <br></br>
+                  {x.title} <br></br>
                   <button>More Info</button>
                 </Popup>
               </Marker>
