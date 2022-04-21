@@ -1,0 +1,26 @@
+@import "antd/dist/antd.css";
+.ReactModal {
+  z-index: 2000 !important;
+}
+.slide-pane__overlay {
+  width: 100% !important;
+  z-index: 2000 !important;
+}
+.overlay-after-open {
+  z-index: 2000 !important;
+}
+.sliding-panel-container {
+  z-index: 2000 !important;
+}
+.active {
+  z-index: 2000 !important;
+}
+.click-through {
+  z-index: 2000 !important;
+}
+.ant-picker-dropdown {
+  z-index: 5000 !important;
+}
+.ant-select-dropdown {
+  z-index: 5000 !important;
+}

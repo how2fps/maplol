@@ -1,12 +1,27 @@
+import "./Map.css";
 import "leaflet/dist/leaflet.css";
+import "react-sliding-side-panel/src/index.css";
 import "react-sortable-tree/style.css";
 
+import CreateSchedule from "./CreateSchedule";
+import CreateSpecialDay from "./CreateSpecialDay";
+import { TimePicker } from "antd";
+
+import "antd/dist/antd.css";
 import L, { CRS, Icon, LatLngBounds } from "leaflet";
 import markerIconPng from "leaflet/dist/images/marker-icon.png";
 import { useEffect, useState } from "react";
-import { ImageOverlay, MapContainer, Marker, Popup, Rectangle, useMapEvents } from "react-leaflet";
+import {
+  ImageOverlay,
+  MapContainer,
+  Marker,
+  Popup,
+  Rectangle,
+  useMapEvents,
+} from "react-leaflet";
 import { useLocation, useNavigate } from "react-router-dom";
 import Select from "react-select";
+import SlidingPanel from "react-sliding-side-panel";
 
 import { computeToPixels } from "./computeToPixels";
 import DeviceManagement from "./JSONFile";
@@ -64,6 +79,11 @@ const Map = () => {
   const [schoolData, setSchoolData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [zonesList, setZonesList] = useState([]);
+  const [pane, setPane] = useState({ open: false, info: null });
+  const [endTime, setEndTime] = useState();
+  const onEndTimeSelect = (value) => {
+    setEndTime(value);
+  };
 
   useEffect(() => {
     setIsLoading(true);
@@ -245,10 +265,104 @@ const Map = () => {
     );
   }
 
+  //CURRENTLY WORKING ON
+  const openPane = (clickedInfo) => {
+    setPane((prevState) => {
+      return { ...prevState, open: false };
+    });
+    console.log(clickedInfo);
+    console.log(clickedInfo.title);
+    if (clickedInfo._type === "Resource:ns0__Zone") {
+      clickedInfo.devices = clickedInfo.children;
+    }
+    console.log(clickedInfo);
+    setTimeout(() => {
+      setPane({ open: true, info: clickedInfo });
+    }, 50);
+  };
+  //CURRENTLY WORKING ON
+  const getTitleFromJSON = (node) => {
+    let title = node.title;
+    let newTitle = title.split("/")[title.split("/").length - 1];
+    // newTitle = splitProperCase(newTitle);
+    newTitle = newTitle.replaceAll("_", " ");
+    if (node._type === "Resource:ns0__Equipment") {
+      newTitle += " (Device)";
+      if (node.ns0__hasTag !== undefined) {
+        newTitle +=
+          " (" +
+          JSON.parse(node.ns0__hasTag[0].replace(/'/g, '"')).Description +
+          ")";
+      }
+      if (node.ns0__hasassociatedtag !== undefined) {
+        const coord = JSON.parse(
+          node.ns0__hasassociatedtag[0].ns0__hasValue[0].replace(/'/g, '"')
+        );
+        newTitle +=
+          " (Long:" + coord.Longtitude + " Lat: " + coord.Latitude + ")";
+      }
+    }
+    if (node._type === "Resource:ns0__Point") {
+      newTitle += " (Point)";
+      if (node.ns0__hasunit !== undefined) {
+        newTitle +=
+          " (" +
+          node.ns0__hasunit[0].title.split("/")[
+            node.ns0__hasunit[0].title.split("/").length - 1
+          ] +
+          ")";
+      }
+      if (node.ns0__timeseries !== undefined) {
+        newTitle +=
+          " (TimeSeriesId: " +
+          node.ns0__timeseries[0].ns0__hasTimeseriesId +
+          ")";
+      }
+    }
+
+    return newTitle;
+  };
+
   return (
     <>
+      {!isLoading && schoolData && zonesList && pane.info !== null ? (
+        <SlidingPanel
+          SlidingPanel
+          noBackdrop
+          isOpen={pane.open}
+          type="right"
+          size="30">
+          <div
+            style={{
+              border: "black 4px solid",
+              background: "white",
+              height: "100%",
+              boxShadow: "0px -10px 85px 85px #888888",
+            }}>
+            {pane.info.title}
+            {pane.info.devices
+              ? pane.info.devices.map((x) => {
+                  return <div>{getTitleFromJSON(x)}</div>;
+                })
+              : ""}
+            <CreateSchedule />
+            <CreateSpecialDay />
+            <button
+              onClick={() =>
+                setPane((prevState) => {
+                  return { ...prevState, open: false };
+                })
+              }>
+              close
+            </button>
+          </div>
+        </SlidingPanel>
+      ) : (
+        <div></div>
+      )}
       {!isLoading && schoolData && zonesList ? (
-        <div style={{ display: "flex", flex: "row", width: "100%" }}>
+        <div
+          style={{ display: "flex", flex: "row", width: "100%", zIndex: "10" }}>
           <div style={{ padding: "20px", width: "40%" }}>
             <h1>Schools</h1>
             <Select
@@ -276,6 +390,7 @@ const Map = () => {
             />
             <h2 style={{ marginTop: "20px" }}>Locations and Devices</h2>
             <DeviceManagement
+              openPane={openPane}
               plotMarkerOnClick={plotMarkerOnClick}
               selectedFloor={selectedFloor}
               schoolData={schoolData}
@@ -307,7 +422,11 @@ const Map = () => {
                 [0, 500],
               ]}
               center={[0, 0]}
-              style={{ background: "white", border: "2px solid black" }}
+              style={{
+                position: "absolute",
+                background: "white",
+                border: "2px solid black",
+              }}
             />
             {zonesList.map((x, index) => {
               return (

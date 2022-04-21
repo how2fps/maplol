@@ -4,7 +4,11 @@ import { Icon } from "@material-ui/core";
 import React, { useEffect, useRef, useState } from "react";
 import useScrollOnDrag from "react-scroll-ondrag";
 
-import { MySortableTree, TreeNodeIcon, TreeNodeSensorCounter } from "./styled.js";
+import {
+  MySortableTree,
+  TreeNodeIcon,
+  TreeNodeSensorCounter,
+} from "./styled.js";
 
 let countHolder = 0;
 
@@ -90,7 +94,7 @@ function DeviceManagement(props) {
   }, [props.selectedFloor]);
 
   const onNodeClick = (nodeInfo) => {
-    console.log(nodeInfo);
+    // console.log(nodeInfo);
     let location;
     let coordinates;
     if (nodeInfo.node.hasOwnProperty("location")) {
@@ -121,6 +125,7 @@ function DeviceManagement(props) {
         }
       }
     }
+    props.openPane(nodeInfo.node);
   };
 
   const getFullPath = (path) => {
