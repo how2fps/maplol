@@ -4,11 +4,11 @@ import "react-sortable-tree/style.css";
 import L, { CRS, Icon, LatLngBounds } from "leaflet";
 import markerIconPng from "leaflet/dist/images/marker-icon.png";
 import { useEffect, useState } from "react";
-import { ImageOverlay, MapContainer, Marker, Popup, useMapEvents } from "react-leaflet";
+import { ImageOverlay, MapContainer, Marker, Popup, Rectangle, useMapEvents } from "react-leaflet";
 import { useLocation, useNavigate } from "react-router-dom";
 import Select from "react-select";
 
-import { computeToPixels, listOfZones } from "./computeToPixels";
+import { computeToPixels } from "./computeToPixels";
 import DeviceManagement from "./JSONFile";
 import data from "./rivervale.json";
 
@@ -63,7 +63,7 @@ const Map = () => {
   const [schools, setSchools] = useState([]);
   const [schoolData, setSchoolData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [zonesList, setZonesList] = useState(null);
+  const [zonesList, setZonesList] = useState([]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -83,20 +83,20 @@ const Map = () => {
 
     //
 
-    const list = [
-      { name: "Test 1", long: 103.904698, lat: 1.393119 },
-      { name: "Test 2", long: 103.904764, lat: 1.392965 },
-    ].map((x) => {
-      const updatedCoordinates = computeToPixels({
-        lat: x.lat,
-        long: x.long,
-      });
-      // console.log(updatedCoordinates);
-      x.lat = updatedCoordinates[0];
-      x.long = updatedCoordinates[1];
-      return x;
-    });
-    setZonesList(list);
+    // const list = [
+    //   { name: "Test 1", long: 103.904698, lat: 1.393119 },
+    //   { name: "Test 2", long: 103.904764, lat: 1.392965 },
+    // ].map((x) => {
+    //   const updatedCoordinates = computeToPixels({
+    //     lat: x.lat,
+    //     long: x.long,
+    //   });
+    //   // console.log(updatedCoordinates);
+    //   x.lat = updatedCoordinates[0];
+    //   x.long = updatedCoordinates[1];
+    //   return x;
+    // });
+    // setZonesList(list);
 
     //
 
@@ -186,21 +186,23 @@ const Map = () => {
     });
 
     console.log(updatedCoordsObjects);
-    updatedCoordsObjects.map((x) => {
-      if (map) {
-        L.rectangle([
-          [x.UpperLeftLat, x.UpperLeftLong],
-          [x.BottomRightLat, x.BottomRightLong],
-          { color: "Red", weight: 1 },
-        ]).addTo(map);
-      }
-    });
+    // updatedCoordsObjects.map((x) => {
+    //   if (map) {
+    //     L.rectangle([
+    //       [x.UpperLeftLat, x.UpperLeftLong],
+    //       [x.BottomRightLat, x.BottomRightLong],
+    //       { color: "Red", weight: 1 },
+    //     ]).addTo(map);
+    //   }
+    // });
     setZonesList(updatedCoordsObjects);
   }, [selectedFloor]);
 
   useEffect(() => {
     const img = new Image();
-    const imgSrc = process.env.PUBLIC_URL + `/RVPS - FP0${selectedFloor}.png`;
+    // const imgSrc = process.env.PUBLIC_URL + `/RVPS - FP0${selectedFloor}.png`;
+    const imgSrc =
+      process.env.PUBLIC_URL + `/rvv-floor${selectedFloor}_rotated.png`;
     img.src = imgSrc;
     setImageWidth(img.width);
     setImageHeight(img.height);
@@ -245,7 +247,7 @@ const Map = () => {
 
   return (
     <>
-      {!isLoading && schoolData ? (
+      {!isLoading && schoolData && zonesList ? (
         <div style={{ display: "flex", flex: "row", width: "100%" }}>
           <div style={{ padding: "20px", width: "40%" }}>
             <h1>Schools</h1>
@@ -307,6 +309,18 @@ const Map = () => {
               center={[0, 0]}
               style={{ background: "white", border: "2px solid black" }}
             />
+            {zonesList.map((x, index) => {
+              return (
+                <Rectangle
+                  key={index}
+                  bounds={[
+                    [x.UpperLeftLat, x.UpperLeftLong],
+                    [x.BottomRightLat, x.BottomRightLong],
+                  ]}
+                />
+              );
+            })}
+
             <MyComponent />
             {zonesList.map((x, index) => (
               <Marker

@@ -43,10 +43,10 @@ export const computeToPixels = (map) => {
       Math.sin(DeltaLong / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   const Distance = c * EarthRadius;
-  const scaleFactor = 26 / 10;
+  const scaleFactor = 36.5 / 10;
 
   let newLat = Distance * Math.cos(AngleBetweenRad) * scaleFactor;
-  newLat = 500 - newLat;
+  // newLat = 500 - newLat;
   const newLong = Distance * Math.sin(AngleBetweenRad) * scaleFactor;
 
   return [newLat, newLong];
