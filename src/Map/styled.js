@@ -343,6 +343,7 @@ export const RecordScene = styled.div`
 export const TabArea = styled.div`
   display: flex;
   user-select: none;
+  width: 100%;
 `;
 
 export const TabHeader = styled.div`

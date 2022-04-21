@@ -26,6 +26,7 @@ import SlidingPanel from "react-sliding-side-panel";
 import { computeToPixels } from "./computeToPixels";
 import DeviceManagement from "./JSONFile";
 import data from "./rivervale.json";
+import SceneMain from "./SceneMain";
 
 export const SCHOOL_DUMMY_LIST = [
   {
@@ -79,7 +80,7 @@ const Map = () => {
   const [schoolData, setSchoolData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [zonesList, setZonesList] = useState([]);
-  const [pane, setPane] = useState({ open: false, info: null });
+  const [pane, setPane] = useState({ open: false, info: null, from: "" });
   const [endTime, setEndTime] = useState();
   const onEndTimeSelect = (value) => {
     setEndTime(value);
@@ -168,6 +169,7 @@ const Map = () => {
       locationObject.title = x.uri;
 
       //fixing json for devices
+      //NOT INSTANT FIX IT!!! ASYNC!!!!!!!
       if (map !== null) {
         locationObject.devices = x.ns0__haslocation.map((device) => {
           device.description = JSON.parse(
@@ -205,7 +207,6 @@ const Map = () => {
       return x;
     });
 
-    console.log(updatedCoordsObjects);
     // updatedCoordsObjects.map((x) => {
     //   if (map) {
     //     L.rectangle([
@@ -215,6 +216,7 @@ const Map = () => {
     //     ]).addTo(map);
     //   }
     // });
+    console.log(updatedCoordsObjects);
     setZonesList(updatedCoordsObjects);
   }, [selectedFloor]);
 
@@ -266,21 +268,21 @@ const Map = () => {
   }
 
   //CURRENTLY WORKING ON
-  const openPane = (clickedInfo) => {
-    setPane((prevState) => {
-      return { ...prevState, open: false };
-    });
-    console.log(clickedInfo);
-    console.log(clickedInfo.title);
+  const openPaneFromTree = (clickedInfo) => {
     if (clickedInfo._type === "Resource:ns0__Zone") {
       clickedInfo.devices = clickedInfo.children;
     }
     console.log(clickedInfo);
-    setTimeout(() => {
-      setPane({ open: true, info: clickedInfo });
-    }, 50);
+    setPane({ open: true, info: clickedInfo, from: "tree" });
+  };
+
+  const openPaneFromMap = (clickedInfo) => {
+    console.log(clickedInfo);
+    setPane({ open: true, info: clickedInfo, from: "map" });
+    console.log("wtf");
   };
   //CURRENTLY WORKING ON
+
   const getTitleFromJSON = (node) => {
     let title = node.title;
     let newTitle = title.split("/")[title.split("/").length - 1];
@@ -325,7 +327,7 @@ const Map = () => {
 
   return (
     <>
-      {!isLoading && schoolData && zonesList && pane.info !== null ? (
+      {!isLoading && schoolData && zonesList && pane.info && (
         <SlidingPanel
           SlidingPanel
           noBackdrop
@@ -339,26 +341,34 @@ const Map = () => {
               height: "100%",
               boxShadow: "0px -10px 85px 85px #888888",
             }}>
-            {pane.info.title}
-            {pane.info.devices
-              ? pane.info.devices.map((x) => {
-                  return <div>{getTitleFromJSON(x)}</div>;
-                })
-              : ""}
-            <CreateSchedule />
-            <CreateSpecialDay />
             <button
               onClick={() =>
                 setPane((prevState) => {
                   return { ...prevState, open: false };
                 })
               }>
-              close
+              CLOSE
             </button>
+            <h1>
+              {pane.from === "tree"
+                ? getTitleFromJSON(pane.info)
+                : pane.info.title}
+            </h1>
+            {pane.from === "tree" ? (
+              pane.info._type === "Resource:ns0__Zone" && <SceneMain />
+            ) : (
+              <SceneMain />
+            )}
+            {pane.info.devices && (
+              <>
+                <h2>Devices</h2>
+                {pane.info.devices.map((x) => {
+                  return <div>{getTitleFromJSON(x)}</div>;
+                })}
+              </>
+            )}
           </div>
         </SlidingPanel>
-      ) : (
-        <div></div>
       )}
       {!isLoading && schoolData && zonesList ? (
         <div
@@ -390,7 +400,7 @@ const Map = () => {
             />
             <h2 style={{ marginTop: "20px" }}>Locations and Devices</h2>
             <DeviceManagement
-              openPane={openPane}
+              openPane={openPaneFromTree}
               plotMarkerOnClick={plotMarkerOnClick}
               selectedFloor={selectedFloor}
               schoolData={schoolData}
@@ -432,6 +442,11 @@ const Map = () => {
               return (
                 <Rectangle
                   key={index}
+                  eventHandlers={{
+                    click: (e) => {
+                      openPaneFromMap(x);
+                    },
+                  }}
                   bounds={[
                     [x.UpperLeftLat, x.UpperLeftLong],
                     [x.BottomRightLat, x.BottomRightLong],
@@ -440,7 +455,7 @@ const Map = () => {
               );
             })}
 
-            <MyComponent />
+            {/* <MyComponent /> */}
             {zonesList.map((x, index) => (
               <Marker
                 key={index}
@@ -448,6 +463,11 @@ const Map = () => {
                   (x.UpperLeftLat + x.BottomRightLat) / 2,
                   (x.BottomRightLong + x.UpperLeftLong) / 2,
                 ]}
+                eventHandlers={{
+                  click: (e) => {
+                    openPaneFromMap(x);
+                  },
+                }}
                 icon={
                   new Icon({
                     iconUrl: markerIconPng,
@@ -455,10 +475,10 @@ const Map = () => {
                     iconAnchor: [12, 41],
                   })
                 }>
-                <Popup>
+                {/* <Popup>
                   {x.title} <br></br>
                   <button>More Info</button>
-                </Popup>
+                </Popup> */}
               </Marker>
             ))}
           </MapContainer>
