@@ -4,13 +4,49 @@ import { Icon } from "@material-ui/core";
 import React, { useEffect, useRef, useState } from "react";
 import useScrollOnDrag from "react-scroll-ondrag";
 
-import {
-  MySortableTree,
-  TreeNodeIcon,
-  TreeNodeSensorCounter,
-} from "./styled.js";
+import { MySortableTree, TreeNodeIcon, TreeNodeSensorCounter } from "./styled.js";
 
 let countHolder = 0;
+
+export const getTitleFromJSON = (node) => {
+  let title = node.title;
+  let newTitle = title.split("/")[title.split("/").length - 1];
+  // newTitle = splitProperCase(newTitle);
+  newTitle = newTitle.replaceAll("_", " ");
+  if (node._type === "Resource:ns0__Equipment") {
+    newTitle += " (Device)";
+    if (node.ns0__hasTag !== undefined) {
+      newTitle +=
+        " (" +
+        JSON.parse(node.ns0__hasTag[0].replace(/'/g, '"')).Description +
+        ")";
+    }
+    if (node.ns0__hasassociatedtag !== undefined) {
+      const coord = JSON.parse(
+        node.ns0__hasassociatedtag[0].ns0__hasValue[0].replace(/'/g, '"')
+      );
+      newTitle +=
+        " (Long:" + coord.Longtitude + " Lat: " + coord.Latitude + ")";
+    }
+  }
+  if (node._type === "Resource:ns0__Point") {
+    newTitle += " (Point)";
+    if (node.ns0__hasunit !== undefined) {
+      newTitle +=
+        " (" +
+        node.ns0__hasunit[0].title.split("/")[
+          node.ns0__hasunit[0].title.split("/").length - 1
+        ] +
+        ")";
+    }
+    if (node.ns0__timeseries !== undefined) {
+      newTitle +=
+        " (TimeSeriesId: " + node.ns0__timeseries[0].ns0__hasTimeseriesId + ")";
+    }
+  }
+
+  return newTitle;
+};
 
 function DeviceManagement(props) {
   const ref = useRef();
@@ -94,7 +130,7 @@ function DeviceManagement(props) {
   }, [props.selectedFloor]);
 
   const onNodeClick = (nodeInfo) => {
-    // console.log(nodeInfo);
+    console.log(nodeInfo);
     let location;
     let coordinates;
     if (nodeInfo.node.hasOwnProperty("location")) {
@@ -236,48 +272,6 @@ function DeviceManagement(props) {
   //   }
   //   return data;
   // };
-
-  const getTitleFromJSON = (node) => {
-    let title = node.title;
-    let newTitle = title.split("/")[title.split("/").length - 1];
-    // newTitle = splitProperCase(newTitle);
-    newTitle = newTitle.replaceAll("_", " ");
-    if (node._type === "Resource:ns0__Equipment") {
-      newTitle += " (Device)";
-      if (node.ns0__hasTag !== undefined) {
-        newTitle +=
-          " (" +
-          JSON.parse(node.ns0__hasTag[0].replace(/'/g, '"')).Description +
-          ")";
-      }
-      if (node.ns0__hasassociatedtag !== undefined) {
-        const coord = JSON.parse(
-          node.ns0__hasassociatedtag[0].ns0__hasValue[0].replace(/'/g, '"')
-        );
-        newTitle +=
-          " (Long:" + coord.Longtitude + " Lat: " + coord.Latitude + ")";
-      }
-    }
-    if (node._type === "Resource:ns0__Point") {
-      newTitle += " (Point)";
-      if (node.ns0__hasunit !== undefined) {
-        newTitle +=
-          " (" +
-          node.ns0__hasunit[0].title.split("/")[
-            node.ns0__hasunit[0].title.split("/").length - 1
-          ] +
-          ")";
-      }
-      if (node.ns0__timeseries !== undefined) {
-        newTitle +=
-          " (TimeSeriesId: " +
-          node.ns0__timeseries[0].ns0__hasTimeseriesId +
-          ")";
-      }
-    }
-
-    return newTitle;
-  };
 
   return (
     <div

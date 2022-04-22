@@ -1,30 +1,19 @@
 import "./Map.css";
+import "antd/dist/antd.css";
 import "leaflet/dist/leaflet.css";
 import "react-sliding-side-panel/src/index.css";
 import "react-sortable-tree/style.css";
 
-import CreateSchedule from "./CreateSchedule";
-import CreateSpecialDay from "./CreateSpecialDay";
-import { TimePicker } from "antd";
-
-import "antd/dist/antd.css";
 import L, { CRS, Icon, LatLngBounds } from "leaflet";
 import markerIconPng from "leaflet/dist/images/marker-icon.png";
 import { useEffect, useState } from "react";
-import {
-  ImageOverlay,
-  MapContainer,
-  Marker,
-  Popup,
-  Rectangle,
-  useMapEvents,
-} from "react-leaflet";
+import { ImageOverlay, MapContainer, Marker, Popup, Rectangle, useMapEvents } from "react-leaflet";
 import { useLocation, useNavigate } from "react-router-dom";
 import Select from "react-select";
 import SlidingPanel from "react-sliding-side-panel";
 
 import { computeToPixels } from "./computeToPixels";
-import DeviceManagement from "./JSONFile";
+import DeviceManagement, { getTitleFromJSON } from "./JSONFile";
 import data from "./rivervale.json";
 import SceneMain from "./SceneMain";
 
@@ -56,6 +45,8 @@ export const SCHOOL_DUMMY_LIST = [
   },
 ];
 
+//component that console.logs out latlng when map is clicked
+//z-index issues if it is present so only turn it on when needed
 function MyComponent() {
   useMapEvents({
     click: (e) => {
@@ -69,6 +60,7 @@ const Map = () => {
   const navigate = useNavigate();
   const { state } = useLocation();
 
+  const [isLoading, setIsLoading] = useState(false);
   const [map, setMap] = useState(null);
   const [imageSrc, setImageSrc] = useState("");
   const [imageWidth, setImageWidth] = useState(0);
@@ -78,18 +70,17 @@ const Map = () => {
   const [selectedSchool, setSelectedSchool] = useState(null);
   const [schools, setSchools] = useState([]);
   const [schoolData, setSchoolData] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [zonesList, setZonesList] = useState([]);
-  const [pane, setPane] = useState({ open: false, info: null, from: "" });
-  const [endTime, setEndTime] = useState();
-  const onEndTimeSelect = (value) => {
-    setEndTime(value);
-  };
+  //error happens if title isn't intialised at state, due to slider library possibly
+  //rendering before it's actually opened?
+  const [pane, setPane] = useState({
+    open: false,
+    info: { title: "" },
+    from: "",
+  });
 
   useEffect(() => {
     setIsLoading(true);
-    setSchools(SCHOOL_DUMMY_LIST);
-    setSchoolData(data);
     const arrayOfDifferentBuildings = data[0].ns0__islocationof;
     // const updatedListOfZones = listOfZones.map((x) => {
     //   const updatedCoordinates = computeToPixels({
@@ -128,12 +119,14 @@ const Map = () => {
         }
       })
       .filter((x) => x !== undefined);
-
     const lengths = floorBuildings.map((a) => a.length);
+
     setAmountOfFloors(Math.max(...lengths));
     if (state) {
       setSelectedSchool(state);
     }
+    setSchools(SCHOOL_DUMMY_LIST);
+    setSchoolData(data);
     window.history.replaceState({}, document.title);
     setIsLoading(false);
   }, []);
@@ -141,6 +134,7 @@ const Map = () => {
   useEffect(() => {
     //Main useEffect to find out all the different zones each floor with updated coords
     //and the devices each zones have
+    setIsLoading(true);
     const arrayOfDifferentBuildings = data[0].ns0__islocationof;
     const floorBuildings = arrayOfDifferentBuildings.map((x) => {
       if (x.ns0__islocationof) {
@@ -169,25 +163,20 @@ const Map = () => {
       locationObject.title = x.uri;
 
       //fixing json for devices
-      //NOT INSTANT FIX IT!!! ASYNC!!!!!!!
-      if (map !== null) {
-        locationObject.devices = x.ns0__haslocation.map((device) => {
-          device.description = JSON.parse(
-            device.ns0__hasTag[0].split("'").join('"')
-          );
-          device.description = device.description.Description;
-          device.location = JSON.parse(
-            device.ns0__hasassociatedtag[0].ns0__hasValue[0]
-              .split("'")
-              .join('"')
-          );
-          // console.log(device);
-          return device;
-        });
-      }
+      locationObject.devices = x.ns0__haslocation.map((device) => {
+        device.description = JSON.parse(
+          device.ns0__hasTag[0].split("'").join('"')
+        );
+        device.description = device.description.Description;
+        device.location = JSON.parse(
+          device.ns0__hasassociatedtag[0].ns0__hasValue[0].split("'").join('"')
+        );
+        return device;
+      });
       return locationObject;
     });
 
+    //updating latlng with computeToPixels function
     const updatedCoordsObjects = locationObjects.map((x) => {
       const updatedUpperLeftCoords = computeToPixels({
         long: x.UpperLeftLong,
@@ -207,20 +196,7 @@ const Map = () => {
       return x;
     });
 
-    // updatedCoordsObjects.map((x) => {
-    //   if (map) {
-    //     L.rectangle([
-    //       [x.UpperLeftLat, x.UpperLeftLong],
-    //       [x.BottomRightLat, x.BottomRightLong],
-    //       { color: "Red", weight: 1 },
-    //     ]).addTo(map);
-    //   }
-    // });
-    console.log(updatedCoordsObjects);
-    setZonesList(updatedCoordsObjects);
-  }, [selectedFloor]);
-
-  useEffect(() => {
+    //Loading image "dynamically"
     const img = new Image();
     // const imgSrc = process.env.PUBLIC_URL + `/RVPS - FP0${selectedFloor}.png`;
     const imgSrc =
@@ -229,26 +205,31 @@ const Map = () => {
     setImageWidth(img.width);
     setImageHeight(img.height);
     setImageSrc(imgSrc);
-    if (!map) return;
-    const fetchGeoJSON = async () => {
-      // const osm = L.TileLayer.boundaryCanvas();
+    if (!map) {
+      setIsLoading(false);
+      return;
+    } else {
+      setIsLoading(false);
       L.map.imageSrc = imgSrc;
-    };
-
-    fetchGeoJSON();
-    // if (state) onSearchHandler(state);
-    // window.history.replaceState({}, document.title);
-  }, [selectedFloor]);
+      // if (state) onSearchHandler(state);
+      // window.history.replaceState({}, document.title);
+      setZonesList(updatedCoordsObjects);
+    }
+  }, [selectedFloor, map]);
 
   const onSearchHandler = (e) => {
+    //to send data after redirecting
     navigate("../DeviceManagement", { state: e });
   };
 
   const onFloorChange = (e) => {
+    //floor change after user selects
     setSelectedFloor(e.value.key);
   };
 
   const plotMarkerOnClick = (ulLat, ulLong, blLat, blLong) => {
+    //not used atm, plots rectangle on map when tree node is clicked on
+    //based on upper left and bottom right latlng
     const newUpperCoords = computeToPixels({ lat: ulLat, long: ulLong });
     const newBottomCoords = computeToPixels({ lat: blLat, long: blLong });
     L.rectangle([
@@ -258,6 +239,7 @@ const Map = () => {
     ]).addTo(map);
   };
 
+  //to display floor options in floor select input
   let FloorControls = [];
   for (var i = 1; i <= amountOfFloors; i++) {
     FloorControls.push(
@@ -272,65 +254,19 @@ const Map = () => {
     if (clickedInfo._type === "Resource:ns0__Zone") {
       clickedInfo.devices = clickedInfo.children;
     }
-    console.log(clickedInfo);
     setPane({ open: true, info: clickedInfo, from: "tree" });
   };
 
   const openPaneFromMap = (clickedInfo) => {
-    console.log(clickedInfo);
     setPane({ open: true, info: clickedInfo, from: "map" });
-    console.log("wtf");
-  };
-  //CURRENTLY WORKING ON
-
-  const getTitleFromJSON = (node) => {
-    let title = node.title;
-    let newTitle = title.split("/")[title.split("/").length - 1];
-    // newTitle = splitProperCase(newTitle);
-    newTitle = newTitle.replaceAll("_", " ");
-    if (node._type === "Resource:ns0__Equipment") {
-      newTitle += " (Device)";
-      if (node.ns0__hasTag !== undefined) {
-        newTitle +=
-          " (" +
-          JSON.parse(node.ns0__hasTag[0].replace(/'/g, '"')).Description +
-          ")";
-      }
-      if (node.ns0__hasassociatedtag !== undefined) {
-        const coord = JSON.parse(
-          node.ns0__hasassociatedtag[0].ns0__hasValue[0].replace(/'/g, '"')
-        );
-        newTitle +=
-          " (Long:" + coord.Longtitude + " Lat: " + coord.Latitude + ")";
-      }
-    }
-    if (node._type === "Resource:ns0__Point") {
-      newTitle += " (Point)";
-      if (node.ns0__hasunit !== undefined) {
-        newTitle +=
-          " (" +
-          node.ns0__hasunit[0].title.split("/")[
-            node.ns0__hasunit[0].title.split("/").length - 1
-          ] +
-          ")";
-      }
-      if (node.ns0__timeseries !== undefined) {
-        newTitle +=
-          " (TimeSeriesId: " +
-          node.ns0__timeseries[0].ns0__hasTimeseriesId +
-          ")";
-      }
-    }
-
-    return newTitle;
   };
 
-  return (
-    <>
-      {!isLoading && schoolData && zonesList && pane.info && (
+  const DetailsSlider = () => {
+    if (!isLoading) {
+      return (
         <SlidingPanel
-          SlidingPanel
-          noBackdrop
+          SlidingPanel={true}
+          noBackdrop={true}
           isOpen={pane.open}
           type="right"
           size="30">
@@ -339,7 +275,6 @@ const Map = () => {
               border: "black 4px solid",
               background: "white",
               height: "100%",
-              boxShadow: "0px -10px 85px 85px #888888",
             }}>
             <button
               onClick={() =>
@@ -362,14 +297,26 @@ const Map = () => {
             {pane.info.devices && (
               <>
                 <h2>Devices</h2>
-                {pane.info.devices.map((x) => {
-                  return <div>{getTitleFromJSON(x)}</div>;
-                })}
+                {pane.from === "tree" &&
+                  pane.info.devices.map((x, index) => {
+                    return <div key={index}>{getTitleFromJSON(x)}</div>;
+                  })}
+                {pane.from === "map" &&
+                  pane.info.devices.map((x, index) => {
+                    return <div key={index}>{x.title}</div>;
+                  })}
               </>
             )}
           </div>
         </SlidingPanel>
-      )}
+      );
+    }
+  };
+  //CURRENTLY WORKING ON
+
+  return (
+    <>
+      <DetailsSlider />
       {!isLoading && schoolData && zonesList ? (
         <div
           style={{ display: "flex", flex: "row", width: "100%", zIndex: "10" }}>
@@ -443,7 +390,7 @@ const Map = () => {
                 <Rectangle
                   key={index}
                   eventHandlers={{
-                    click: (e) => {
+                    click: () => {
                       openPaneFromMap(x);
                     },
                   }}
@@ -454,7 +401,6 @@ const Map = () => {
                 />
               );
             })}
-
             {/* <MyComponent /> */}
             {zonesList.map((x, index) => (
               <Marker
@@ -464,7 +410,7 @@ const Map = () => {
                   (x.BottomRightLong + x.UpperLeftLong) / 2,
                 ]}
                 eventHandlers={{
-                  click: (e) => {
+                  click: () => {
                     openPaneFromMap(x);
                   },
                 }}
