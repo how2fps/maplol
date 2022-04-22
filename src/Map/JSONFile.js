@@ -130,12 +130,16 @@ function DeviceManagement(props) {
   }, [props.selectedFloor]);
 
   const onNodeClick = (nodeInfo) => {
-    console.log(nodeInfo);
     let location;
     let coordinates;
     if (nodeInfo.node.hasOwnProperty("location")) {
       location = nodeInfo.node.location;
-      if (location[0].hasOwnProperty("coordinates")) {
+      console.log(location);
+
+      if (
+        Array.isArray(location) &&
+        location[0].hasOwnProperty("coordinates")
+      ) {
         coordinates = location[0].coordinates[0];
 
         //to solve errors found in JSON so it's parseable

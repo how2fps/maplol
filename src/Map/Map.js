@@ -4,10 +4,9 @@ import "leaflet/dist/leaflet.css";
 import "react-sliding-side-panel/src/index.css";
 import "react-sortable-tree/style.css";
 
-import L, { CRS, Icon, LatLngBounds } from "leaflet";
-import markerIconPng from "leaflet/dist/images/marker-icon.png";
+import L, { CRS, LatLngBounds } from "leaflet";
 import { useEffect, useState } from "react";
-import { ImageOverlay, MapContainer, Marker, Popup, Rectangle, useMapEvents } from "react-leaflet";
+import { ImageOverlay, MapContainer, Marker, Rectangle, useMapEvents } from "react-leaflet";
 import { useLocation, useNavigate } from "react-router-dom";
 import Select from "react-select";
 import SlidingPanel from "react-sliding-side-panel";
@@ -303,7 +302,7 @@ const Map = () => {
                   })}
                 {pane.from === "map" &&
                   pane.info.devices.map((x, index) => {
-                    return <div key={index}>{x.title}</div>;
+                    return <div key={index}>{getTitleFromJSONDevice(x)}</div>;
                   })}
               </>
             )}
@@ -312,6 +311,30 @@ const Map = () => {
       );
     }
   };
+
+  //changed x.title to x.uri to make it work for devices
+  //when opened
+  const getTitleFromJSONDevice = (x) => {
+    let title = x.uri;
+    let newTitle = title.split("/")[title.split("/").length - 1];
+    newTitle = newTitle.replaceAll("_", " ");
+    newTitle += " (Device)";
+    if (x.ns0__hasTag !== undefined) {
+      newTitle +=
+        " (" +
+        JSON.parse(x.ns0__hasTag[0].replace(/'/g, '"')).Description +
+        ")";
+    }
+    if (x.ns0__hasassociatedtag !== undefined) {
+      const coord = JSON.parse(
+        x.ns0__hasassociatedtag[0].ns0__hasValue[0].replace(/'/g, '"')
+      );
+      newTitle +=
+        " (Long:" + coord.Longtitude + " Lat: " + coord.Latitude + ")";
+    }
+    return newTitle;
+  };
+
   //CURRENTLY WORKING ON
 
   return (
@@ -397,36 +420,26 @@ const Map = () => {
                   bounds={[
                     [x.UpperLeftLat, x.UpperLeftLong],
                     [x.BottomRightLat, x.BottomRightLong],
-                  ]}
-                />
+                  ]}>
+                  <Marker
+                    key={index}
+                    position={[
+                      (x.UpperLeftLat + x.BottomRightLat) / 2,
+                      (x.BottomRightLong + x.UpperLeftLong) / 2,
+                    ]}
+                    eventHandlers={{
+                      click: () => {
+                        openPaneFromMap(x);
+                      },
+                    }}
+                    icon={L.divIcon({
+                      html: "<b class='icon-title'>" + x.title + "</b>",
+                      className: "divIcon",
+                    })}></Marker>
+                </Rectangle>
               );
             })}
             {/* <MyComponent /> */}
-            {zonesList.map((x, index) => (
-              <Marker
-                key={index}
-                position={[
-                  (x.UpperLeftLat + x.BottomRightLat) / 2,
-                  (x.BottomRightLong + x.UpperLeftLong) / 2,
-                ]}
-                eventHandlers={{
-                  click: () => {
-                    openPaneFromMap(x);
-                  },
-                }}
-                icon={
-                  new Icon({
-                    iconUrl: markerIconPng,
-                    iconSize: [25, 41],
-                    iconAnchor: [12, 41],
-                  })
-                }>
-                {/* <Popup>
-                  {x.title} <br></br>
-                  <button>More Info</button>
-                </Popup> */}
-              </Marker>
-            ))}
           </MapContainer>
         </div>
       ) : (

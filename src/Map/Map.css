@@ -27,3 +27,17 @@
 .ant-select-dropdown {
   z-index: 5000 !important;
 }
+.leaflet-div-icon {
+  width: 0;
+  height: 0;
+  border: 0;
+  padding: 0;
+}
+
+.icon-title {
+  position: absolute;
+  font-size: 16px;
+  padding: 3px;
+  text-align: center;
+  transform: translate(-50%, -50%);
+}
