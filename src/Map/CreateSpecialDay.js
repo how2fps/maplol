@@ -1,19 +1,20 @@
+import { Icon } from "@material-ui/core";
+import { DatePicker, Input, Select } from "antd";
+import { TimePicker } from "antd";
 import React, { useState } from "react";
+import { v4 as uuidv4 } from "uuid";
+
 import {
   CreateSpecialDayBody,
-  CreateSpecialDayRoot,
-  CreateSpecialDayFooter,
   CreateSpecialDayButton,
+  CreateSpecialDayFooter,
   CreateSpecialDayHeader,
+  CreateSpecialDayRoot,
+  CustomSelect,
   FormInputRow,
   FormInputRowInput,
   FormInputRowLabel,
-  CustomSelect,
 } from "./styled";
-import { DatePicker, Input, Select } from "antd";
-import { TimePicker } from "antd";
-import { Icon } from "@material-ui/core";
-import { v4 as uuidv4 } from "uuid";
 
 const { Option } = Select;
 
@@ -72,7 +73,7 @@ function CreateSpecialDay(props) {
       startTime,
       endTime,
       selectScene,
-      map: selectedMap.Name,
+      map: "lol",
       type: "SPECIAL",
     };
     addToScheduleList(eventObject);

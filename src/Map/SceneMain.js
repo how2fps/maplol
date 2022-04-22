@@ -14,8 +14,13 @@ function SceneMain(props) {
   } = props;
   const [showSpecialDay, setShowSpecialDay] = useState(false);
   const [scheduleList, setScheduleList] = useState([]);
-  const addToScheduleList = () => {};
-  const removeFromScheduleList = () => {};
+  const addToScheduleList = (schedule) => {
+    setScheduleList([schedule, ...scheduleList]);
+  };
+
+  const removeFromScheduleList = (schedule) => {
+    setScheduleList(scheduleList.filter((item) => item.id !== schedule.id));
+  };
   const showNormal = () => {
     setShowSpecialDay(false);
   };

@@ -1,19 +1,20 @@
+import { Icon } from "@material-ui/core";
+import { Input, Select } from "antd";
+import { TimePicker } from "antd";
 import React, { useState } from "react";
+import { v4 as uuidv4 } from "uuid";
+
 import {
   CreateScheduleBody,
-  CreateScheduleRoot,
-  CreateScheduleFooter,
   CreateScheduleButton,
+  CreateScheduleFooter,
   CreateScheduleHeader,
+  CreateScheduleRoot,
+  CustomSelect,
   FormInputRow,
   FormInputRowInput,
   FormInputRowLabel,
-  CustomSelect,
 } from "./styled";
-import { Input, Select } from "antd";
-import { TimePicker } from "antd";
-import { Icon } from "@material-ui/core";
-import { v4 as uuidv4 } from "uuid";
 
 const { Option } = Select;
 
@@ -73,7 +74,7 @@ function CreateSchedule(props) {
       endTime,
       date,
       selectScene,
-      map: selectedMap.Name,
+      map: "lol",
       type: "SCHEDULE",
     };
     addToScheduleList(eventObject);

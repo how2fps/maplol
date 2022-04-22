@@ -325,7 +325,7 @@ const Map = () => {
   };
 
   //changed x.title to x.uri to make it work for devices
-  //when opened
+  //when opened from map
   const getTitleFromJSONDevice = (x) => {
     let title = x.uri;
     let newTitle = title.split("/")[title.split("/").length - 1];
@@ -357,7 +357,7 @@ const Map = () => {
   return (
     <>
       <DetailsSlider />
-      {!isLoading && schoolData && zonesList ? (
+      {!isLoading && schoolData && zonesList && (
         <div
           style={{ display: "flex", flex: "row", width: "100%", zIndex: "10" }}>
           <div style={{ padding: "20px", width: "40%" }}>
@@ -468,8 +468,6 @@ const Map = () => {
             <MyComponent />
           </MapContainer>
         </div>
-      ) : (
-        <div></div>
       )}
     </>
   );

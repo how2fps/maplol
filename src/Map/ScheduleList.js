@@ -1,20 +1,21 @@
+import Icon from "@mui/material/Icon";
+import { Switch } from "antd";
 import React from "react";
+import { v4 as uuidv4 } from "uuid";
+
 import {
-  ScheduleListBody,
-  ScheduleListRoot,
-  ScheduleListHeader,
-  RecordRow,
-  RecordDate,
-  RecordScene,
-  RecordTime,
-  RecordTitle,
-  RecordStatus,
   RecordControlArea,
   RecordControlButton,
+  RecordDate,
+  RecordRow,
+  RecordScene,
+  RecordStatus,
+  RecordTime,
+  RecordTitle,
+  ScheduleListBody,
+  ScheduleListHeader,
+  ScheduleListRoot,
 } from "./styled";
-import { Switch } from "antd";
-import Icon from "@mui/material/Icon";
-import { v4 as uuidv4 } from "uuid";
 
 function ScheduleList(props) {
   const {
@@ -29,7 +30,7 @@ function ScheduleList(props) {
   } = props;
 
   const pasteFromClipboard = () => {
-    pasteScheduleClipboard(selectedMap.Name, uuidv4());
+    pasteScheduleClipboard("lol", uuidv4());
   };
 
   const copyToClipboard = (schedule) => {
@@ -51,7 +52,7 @@ function ScheduleList(props) {
           .filter(
             (item) =>
               item.type === (showSpecialDay ? "SPECIAL" : "SCHEDULE") &&
-              item.map === selectedMap.Name
+              item.map === "lol"
           )
           .map((schedule, index) => (
             <RecordRow key={index}>
@@ -84,7 +85,7 @@ function ScheduleList(props) {
       {scheduleList.filter(
         (item) =>
           item.type === (showSpecialDay ? "SPECIAL" : "SCHEDULE") &&
-          item.map === selectedMap.Name
+          item.map === "lol"
       ).length === 0 && (
         <div style={{ padding: "0 0 1rem 1rem" }}>
           No {showSpecialDay ? " Special Day " : " Schedule "} Found
