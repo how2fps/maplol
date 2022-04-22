@@ -33,11 +33,21 @@
   border: 0;
   padding: 0;
 }
+.leaflet-interactive {
+  position: relative;
+  width: 0;
+  height: 0;
+  border: 0;
+  padding: 0;
+}
 
 .icon-title {
+  width: 14ch;
   position: absolute;
   font-size: 16px;
   padding: 3px;
   text-align: center;
+  top: 50%;
+  left: 50%;
   transform: translate(-50%, -50%);
 }

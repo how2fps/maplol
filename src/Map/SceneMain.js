@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+
 import CreateSchedule from "./CreateSchedule";
 import CreateSpecialDay from "./CreateSpecialDay";
 import ScheduleList from "./ScheduleList";
@@ -10,12 +11,11 @@ function SceneMain(props) {
     addToScheduleClipboard,
     pasteScheduleClipboard,
     selectedMap,
-    scheduleList,
-    addToScheduleList,
-    removeFromScheduleList,
   } = props;
   const [showSpecialDay, setShowSpecialDay] = useState(false);
-
+  const [scheduleList, setScheduleList] = useState([]);
+  const addToScheduleList = () => {};
+  const removeFromScheduleList = () => {};
   const showNormal = () => {
     setShowSpecialDay(false);
   };
@@ -49,7 +49,7 @@ function SceneMain(props) {
           addToScheduleList={addToScheduleList}
         />
       )}
-      {/* <ScheduleList
+      <ScheduleList
         scheduleClipboard={scheduleClipboard}
         addToScheduleClipboard={addToScheduleClipboard}
         pasteScheduleClipboard={pasteScheduleClipboard}
@@ -58,7 +58,7 @@ function SceneMain(props) {
         scheduleList={scheduleList}
         removeFromScheduleList={removeFromScheduleList}
         addToScheduleList={addToScheduleList}
-      /> */}
+      />
     </div>
   );
 }

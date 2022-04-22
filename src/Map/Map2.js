@@ -55,7 +55,7 @@ function MyComponent() {
   return null;
 }
 
-const Map = () => {
+const Map2 = () => {
   const navigate = useNavigate();
   const { state } = useLocation();
 
@@ -80,14 +80,6 @@ const Map = () => {
 
   useEffect(() => {
     setIsLoading(true);
-
-    //to invert Y axis, idk why this works, idk how
-    //crs really works.
-    L.CRS.XY = L.Util.extend({}, L.CRS.Simple, {
-      code: "XY",
-      projection: L.Projection.LonLat,
-      transformation: new L.Transformation(1, 0, 1, 0),
-    });
     const arrayOfDifferentBuildings = data[0].ns0__islocationof;
     // const updatedListOfZones = listOfZones.map((x) => {
     //   const updatedCoordinates = computeToPixels({
@@ -178,7 +170,6 @@ const Map = () => {
         device.location = JSON.parse(
           device.ns0__hasassociatedtag[0].ns0__hasValue[0].split("'").join('"')
         );
-
         return device;
       });
       return locationObject;
@@ -259,13 +250,13 @@ const Map = () => {
 
   //CURRENTLY WORKING ON
   const openPaneFromTree = (clickedInfo) => {
-    // console.log(clickedInfo);
-    if (clickedInfo._type !== "Resource:ns0__Zone") return;
+    if (clickedInfo._type === "Resource:ns0__Zone") {
+      clickedInfo.devices = clickedInfo.children;
+    }
     setPane({ open: true, info: clickedInfo, from: "tree" });
   };
 
   const openPaneFromMap = (clickedInfo) => {
-    // console.log(clickedInfo);
     setPane({ open: true, info: clickedInfo, from: "map" });
   };
 
@@ -302,22 +293,19 @@ const Map = () => {
             ) : (
               <SceneMain />
             )}
-            {pane.info &&
-              (pane.info.children || pane.info.devices) &&
-              pane.info._type === "Resource:ns0__Zone" && (
-                <>
-                  <h2>Devices</h2>
-                  {pane.from === "tree" &&
-                    pane.info.children.map((x, index) => {
-                      console.log(pane.info);
-                      return <div key={index}>{getTitleFromJSON(x)}</div>;
-                    })}
-                  {pane.from === "map" &&
-                    pane.info.devices.map((x, index) => {
-                      return <div key={index}>{getTitleFromJSONDevice(x)}</div>;
-                    })}
-                </>
-              )}
+            {pane.info.devices && (
+              <>
+                <h2>Devices</h2>
+                {pane.from === "tree" &&
+                  pane.info.devices.map((x, index) => {
+                    return <div key={index}>{getTitleFromJSON(x)}</div>;
+                  })}
+                {pane.from === "map" &&
+                  pane.info.devices.map((x, index) => {
+                    return <div key={index}>{getTitleFromJSONDevice(x)}</div>;
+                  })}
+              </>
+            )}
           </div>
         </SlidingPanel>
       );
@@ -397,7 +385,7 @@ const Map = () => {
             maxZoom={7}
             zoom={1}
             minZoom={1}
-            crs={L.CRS.XY}
+            crs={CRS.Simple}
             center={[0, 0]}
             style={{
               height: "90vh",
@@ -434,7 +422,9 @@ const Map = () => {
                       openPaneFromMap(x);
                     },
                   }}
-                  stroke={false}
+                  fillOpacity={0.1}
+                  border={false}
+                  color={"blue"}
                   bounds={[
                     [x.UpperLeftLat, x.UpperLeftLong],
                     [x.BottomRightLat, x.BottomRightLong],
@@ -451,15 +441,7 @@ const Map = () => {
                       },
                     }}
                     icon={L.divIcon({
-                      html:
-                        "<b class='icon-title'>" +
-                        x.title
-                          .split(" ")
-                          .map((word) => {
-                            return word[0].toUpperCase() + word.substring(1);
-                          })
-                          .join(" ") +
-                        "</b>",
+                      html: "<b class='icon-title'>" + x.title + "</b>",
                       className: "divIcon",
                     })}></Marker>
                 </Rectangle>
@@ -474,4 +456,4 @@ const Map = () => {
     </>
   );
 };
-export default Map;
+export default Map2;
