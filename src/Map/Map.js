@@ -4,6 +4,9 @@ import "leaflet/dist/leaflet.css";
 import "react-sliding-side-panel/src/index.css";
 import "react-sortable-tree/style.css";
 
+import { Icon } from "@material-ui/core";
+import ArrowBack from "@mui/icons-material/ArrowBackIosNew";
+import CloseIcon from "@mui/icons-material/Close";
 import L, { CRS, LatLngBounds } from "leaflet";
 import { useEffect, useState } from "react";
 import { ImageOverlay, MapContainer, Marker, Rectangle, useMapEvents } from "react-leaflet";
@@ -15,6 +18,7 @@ import { computeToPixels } from "./computeToPixels";
 import DeviceManagement, { getTitleFromJSON } from "./JSONFile";
 import data from "./rivervale.json";
 import SceneMain from "./SceneMain";
+import { SidePaneDevice, SidePaneDeviceList } from "./styled";
 
 export const SCHOOL_DUMMY_LIST = [
   {
@@ -76,6 +80,7 @@ const Map = () => {
     open: false,
     info: { title: "" },
     from: "",
+    previousState: null,
   });
 
   useEffect(() => {
@@ -259,17 +264,91 @@ const Map = () => {
 
   //CURRENTLY WORKING ON
   const openPaneFromTree = (clickedInfo) => {
-    // console.log(clickedInfo);
     if (clickedInfo._type !== "Resource:ns0__Zone") return;
-    setPane({ open: true, info: clickedInfo, from: "tree" });
+    setPane({ ...state, open: true, info: clickedInfo, from: "tree" });
   };
 
   const openPaneFromMap = (clickedInfo) => {
-    // console.log(clickedInfo);
-    setPane({ open: true, info: clickedInfo, from: "map" });
+    setPane({ ...state, open: true, info: clickedInfo, from: "map" });
+  };
+
+  const openPaneFromDevice = (clickedInfo) => {
+    setPane((prevState) => {
+      return {
+        open: true,
+        info: clickedInfo,
+        from: "device",
+        previousState: prevState,
+      };
+    });
+  };
+
+  const backFromDevice = () => {
+    setPane((prevState) => {
+      const previousState = prevState.previousState;
+      return {
+        ...prevState,
+        from: previousState.from,
+        info: previousState.info,
+        open: true,
+      };
+    });
+  };
+
+  const closeSidePanel = () => {
+    setPane((prevState) => {
+      return { ...prevState, open: false };
+    });
+  };
+
+  const convertDeviceJSON = (deviceJSON) => {
+    let updatedDeviceJSON = deviceJSON;
+    updatedDeviceJSON = JSON.parse(
+      JSON.stringify(updatedDeviceJSON)
+        .split('"ns0__haspoint"')
+        .join('"children"')
+    );
+    updatedDeviceJSON = JSON.parse(
+      JSON.stringify(updatedDeviceJSON).split('"uri"').join('"title"')
+    );
+    updatedDeviceJSON = JSON.parse(
+      JSON.stringify(updatedDeviceJSON)
+        .split('"ns0__hasassociatedtag"')
+        .join('"location"')
+    );
+    delete updatedDeviceJSON["ns0__hasassociatedtag"];
+    return updatedDeviceJSON;
   };
 
   const DetailsSlider = () => {
+    if (!isLoading && pane.from === "device") {
+      let convertedDeviceInfo = convertDeviceJSON(pane.info);
+      console.log(convertedDeviceInfo);
+      return (
+        <SlidingPanel
+          SlidingPanel={true}
+          noBackdrop={true}
+          isOpen={pane.open}
+          type="right"
+          size="30">
+          <div
+            style={{
+              border: "black 4px solid",
+              background: "white",
+              height: "100%",
+            }}>
+            <button onClick={backFromDevice}>
+              <ArrowBack />
+            </button>
+            <button onClick={closeSidePanel}>
+              <CloseIcon />
+            </button>
+            <h1>{getTitleFromJSON(convertedDeviceInfo)}</h1>
+            <h2>Status</h2>
+          </div>
+        </SlidingPanel>
+      );
+    }
     if (!isLoading) {
       return (
         <SlidingPanel
@@ -284,13 +363,8 @@ const Map = () => {
               background: "white",
               height: "100%",
             }}>
-            <button
-              onClick={() =>
-                setPane((prevState) => {
-                  return { ...prevState, open: false };
-                })
-              }>
-              CLOSE
+            <button onClick={closeSidePanel}>
+              <CloseIcon />
             </button>
             <h1>
               {pane.from === "tree"
@@ -302,22 +376,33 @@ const Map = () => {
             ) : (
               <SceneMain />
             )}
-            {pane.info &&
-              (pane.info.children || pane.info.devices) &&
-              pane.info._type === "Resource:ns0__Zone" && (
-                <>
-                  <h2>Devices</h2>
+            {pane.info && (pane.info.children || pane.info.devices) && (
+              <>
+                <h2>Devices</h2>
+                <SidePaneDeviceList>
                   {pane.from === "tree" &&
                     pane.info.children.map((x, index) => {
-                      console.log(pane.info);
-                      return <div key={index}>{getTitleFromJSON(x)}</div>;
+                      return (
+                        <SidePaneDevice
+                          key={index}
+                          onClick={() => openPaneFromDevice(x)}>
+                          {getTitleFromJSON(x)}
+                        </SidePaneDevice>
+                      );
                     })}
                   {pane.from === "map" &&
                     pane.info.devices.map((x, index) => {
-                      return <div key={index}>{getTitleFromJSONDevice(x)}</div>;
+                      return (
+                        <SidePaneDevice
+                          key={index}
+                          onClick={() => openPaneFromDevice(x)}>
+                          {getTitleFromJSONDevice(x)}
+                        </SidePaneDevice>
+                      );
                     })}
-                </>
-              )}
+                </SidePaneDeviceList>
+              </>
+            )}
           </div>
         </SlidingPanel>
       );
@@ -337,13 +422,7 @@ const Map = () => {
         JSON.parse(x.ns0__hasTag[0].replace(/'/g, '"')).Description +
         ")";
     }
-    if (x.ns0__hasassociatedtag !== undefined) {
-      const coord = JSON.parse(
-        x.ns0__hasassociatedtag[0].ns0__hasValue[0].replace(/'/g, '"')
-      );
-      newTitle +=
-        " (Long:" + coord.Longtitude + " Lat: " + coord.Latitude + ")";
-    }
+
     return newTitle
       .split(" ")
       .map((word) => {
@@ -398,7 +477,7 @@ const Map = () => {
             zoom={1}
             minZoom={1}
             crs={L.CRS.XY}
-            center={[0, 0]}
+            center={[250, 250]}
             style={{
               height: "90vh",
               width: "60%",
@@ -407,8 +486,8 @@ const Map = () => {
             }}
             maxBounds={
               new LatLngBounds([
-                [500, 0],
-                [0, 500],
+                [1000, -500],
+                [-500, 1000],
               ])
             }
             whenCreated={setMap}>

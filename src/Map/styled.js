@@ -1,8 +1,8 @@
 import "react-sortable-tree/style.css";
 
+import { Select } from "antd";
 import SortableTree from "react-sortable-tree";
 import styled from "styled-components";
-import { Select } from "antd";
 
 export const MySortableTree = styled(SortableTree)`
   .rst__rowTitle {
@@ -375,4 +375,21 @@ export const ScheduleListBody = styled.div`
   padding: 0.5rem;
   display: grid;
   grid-gap: 0.5rem;
+`;
+
+export const SidePaneDevice = styled.div`
+  background: #27293d;
+  padding: 3px;
+  align-items: center;
+  justify-items: center;
+  cursor: pointer;
+  color: white;
+  margin: 4px 0;
+`;
+
+export const SidePaneDeviceList = styled.div`
+  padding: 3px;
+  align-items: center;
+  justify-items: center;
+  overflow: scroll;
 `;

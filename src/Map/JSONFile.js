@@ -139,8 +139,7 @@ function DeviceManagement(props) {
     let coordinates;
     if (nodeInfo.node.hasOwnProperty("location")) {
       location = nodeInfo.node.location;
-      console.log(location);
-
+      // console.log(location);
       if (
         Array.isArray(location) &&
         location[0].hasOwnProperty("coordinates")
