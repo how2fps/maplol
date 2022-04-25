@@ -486,8 +486,8 @@ const Map = () => {
             }}
             maxBounds={
               new LatLngBounds([
-                [1000, -500],
-                [-500, 1000],
+                [750, -250],
+                [-250, 750],
               ])
             }
             whenCreated={setMap}>
