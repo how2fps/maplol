@@ -54,7 +54,8 @@
 .sliding-panel-container {
   padding: 3px;
   box-shadow: -2px 0 10px 0px #888888;
-  background: white;
+  color: white;
+  background: #121524;
   width: 100%;
 }
 .sliding-panel {

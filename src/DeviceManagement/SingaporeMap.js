@@ -3,8 +3,8 @@ import "leaflet/dist/leaflet.css";
 
 import L from "leaflet";
 import markerIconPng from "leaflet/dist/images/marker-icon.png";
-import React, { useEffect, useState } from "react";
-import { MapContainer, Marker, Popup } from "react-leaflet";
+import React, { component, useEffect, useState } from "react";
+import { MapContainer, Marker, Tooltip } from "react-leaflet";
 import { useHistory, useLocation } from "react-router-dom";
 import Select from "react-select";
 
@@ -41,12 +41,13 @@ export default function SingaporeMap() {
 
     console.log(state);
     //to search the school after redirected from floorplan
-    if (state) onSearchHandler(state);
+    if (state) onSearchHandler(state.state);
     window.history.replaceState({}, document.title);
   }, [map]);
 
-  const toDetailsHandler = (schoolName, school) => {
-    history.push(`DeviceManagement/${schoolName}`, {
+  const toDetailsHandler = (schoolName, school, e) => {
+    console.log(e);
+    history.push(`/DeviceManagement/${schoolName}`, {
       state: {
         value: school.latLng,
         label: school.name,
@@ -55,12 +56,17 @@ export default function SingaporeMap() {
   };
 
   const onSearchHandler = (e) => {
-    const state = e.state;
+    //close popup before panning because there's
+    //weird interaction if popup is open and it pans to another place
     map.closePopup();
-    setSelectedSchool(state);
-    var latLng = state.value;
-    var markerBounds = L.latLngBounds([latLng]);
+    setSelectedSchool(e);
+    let latLng;
+    if (e.value) latLng = e.value;
+    else latLng = e;
     map.flyTo(latLng, 15);
+
+    //flyTo can be laggy, code below instantly pans without animation
+    // var markerBounds = L.latLngBounds([latLng]);
     // map.fitBounds([[0, 0]]); //to reset map or close by schools fitBounds act weird
     // map.fitBounds(markerBounds);
   };
@@ -74,13 +80,14 @@ export default function SingaporeMap() {
           options={schools.map((school) => {
             return { value: school.latLng, label: school.name };
           })}
-          onChange={onSearchHandler}
+          onChange={(e) => onSearchHandler(e)}
           value={selectedSchool}
           menuIsOpen
           minMenuHeight={"10vh"}
           maxMenuHeight={"40vh"}
         />
       </div>
+      <button onClick={() => history.push(`/DeviceManagement/hi`)}>yo</button>
       <MapContainer
         center={position}
         maxZoom={18}
@@ -97,24 +104,21 @@ export default function SingaporeMap() {
         maxBoundsViscosity={0.2}>
         {SCHOOL_DUMMY_LIST.map((school, index) => (
           <Marker
+            eventHandlers={{
+              click: () => history.push(`/DeviceManagement/${school.name}`),
+            }}
             key={index}
             position={school.latLng}
             icon={
               new L.Icon({
                 iconUrl: markerIconPng,
-                iconSize: [25, 41],
-                iconAnchor: [12, 41],
+                iconSize: [30, 46],
+                iconAnchor: [15, 46],
               })
             }>
-            <Popup>
-              {school.name} <br></br>
-              <button
-                onClick={() =>
-                  toDetailsHandler(school.name.split(" ").join(""), school)
-                }>
-                More Info
-              </button>
-            </Popup>
+            <Tooltip direction="bottom" opacity={1} permanent>
+              {school.name}
+            </Tooltip>
           </Marker>
         ))}
       </MapContainer>

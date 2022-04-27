@@ -401,3 +401,9 @@ export const Controls = styled.div`
   padding: 20px;
   width: 40%;
 `;
+export const Button = styled.button`
+  background: none;
+  outline: none;
+  border: none;
+  cursor: pointer;
+`;

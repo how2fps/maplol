@@ -8,6 +8,8 @@ import { Icon } from "@material-ui/core";
 import ArrowBack from "@mui/icons-material/ArrowBackIosNew";
 import CloseIcon from "@mui/icons-material/Close";
 import L, { CRS, LatLngBounds } from "leaflet";
+import markerIconPng from "leaflet/dist/images/marker-icon.png";
+import React, { component } from "react";
 import { useEffect, useState } from "react";
 import { ImageOverlay, MapContainer, Marker, Rectangle, useMapEvents } from "react-leaflet";
 import { useHistory, useLocation } from "react-router-dom";
@@ -18,7 +20,7 @@ import { computeToPixels } from "./computeToPixels";
 import DeviceManagement, { getTitleFromJSON } from "./JSONFile";
 import data from "./rivervale.json";
 import SceneMain from "./SceneMain";
-import { Container, Controls, SidePane, SidePaneDevice, SidePaneDeviceList } from "./styled";
+import { Button, Container, Controls, SidePaneDevice, SidePaneDeviceList } from "./styled";
 
 export const SCHOOL_DUMMY_LIST = [
   {
@@ -74,6 +76,7 @@ const Map = () => {
   const [schools, setSchools] = useState([]);
   const [schoolData, setSchoolData] = useState(null);
   const [zonesList, setZonesList] = useState([]);
+  const [deviceMarker, setDeviceMarker] = useState(null);
   //error happens if title isn't intialised at state, due to slider library possibly
   //rendering before it's actually opened?
   const [pane, setPane] = useState({
@@ -181,9 +184,10 @@ const Map = () => {
 
     //Loading image "dynamically"
     const img = new Image();
-    // const imgSrc = process.env.PUBLIC_URL + `/RVPS - FP0${selectedFloor}.png`;
+    // const imgSrc = process.env.PUBLIC_URL + `/RVPSFloorplans/RVPS - FP0${selectedFloor}.png`;
     const imgSrc =
-      process.env.PUBLIC_URL + `/rvv-floor${selectedFloor}_rotated.png`;
+      process.env.PUBLIC_URL +
+      `/RVPSFloorplans/rvv-floor${selectedFloor}_rotated.png`;
     img.src = imgSrc;
     setImageWidth(img.width);
     setImageHeight(img.height);
@@ -245,9 +249,10 @@ const Map = () => {
     setPane({ ...state, open: true, info: clickedInfo, from: "map" });
   };
 
-  //open side panel when clicked on device
+  //open side panel of device status when clicked on device
   //saved prevState to go back to zone
   const openPaneFromDevice = (clickedInfo) => {
+    panToDeviceCoords(clickedInfo);
     setPane((prevState) => {
       return {
         open: true,
@@ -332,6 +337,16 @@ const Map = () => {
     });
   };
 
+  const panToDeviceCoords = (deviceInfo) => {
+    setDeviceMarker(null);
+    const long = deviceInfo.location.Longtitude;
+    const lat = deviceInfo.location.Latitude;
+    const updatedLatLong = computeToPixels({ long, lat });
+
+    setDeviceMarker(updatedLatLong);
+    map.flyTo(updatedLatLong, 3);
+  };
+
   const DetailsSlider = () => {
     if (!isLoading && pane.from === "device") {
       let convertedDeviceInfo = convertDeviceJSON(pane.info);
@@ -345,12 +360,12 @@ const Map = () => {
           isOpen={pane.open}
           type="right"
           size="30">
-          <button onClick={backFromDevice}>
+          <Button onClick={backFromDevice}>
             <ArrowBack />
-          </button>
-          <button onClick={closeSidePanel}>
+          </Button>
+          <Button onClick={closeSidePanel}>
             <CloseIcon />
-          </button>
+          </Button>
           <h1>{getTitleFromJSON(convertedDeviceInfo)}</h1>
           <h2>Status</h2>
           {convertedDeviceInfo.children.map((y) => {
@@ -370,9 +385,9 @@ const Map = () => {
           isOpen={pane.open}
           type="right"
           size="30">
-          <button onClick={closeSidePanel}>
+          <Button onClick={closeSidePanel}>
             <CloseIcon />
-          </button>
+          </Button>
           <h1>
             {pane.from === "tree"
               ? getTitleFromJSON(pane.info)
@@ -470,6 +485,7 @@ const Map = () => {
             />
             <h2 style={{ marginTop: "20px" }}>Locations and Devices</h2>
             <DeviceManagement
+              openPaneFromDevice={openPaneFromDevice}
               openPane={openPaneFromTree}
               plotMarkerOnClick={plotMarkerOnClick}
               selectedFloor={selectedFloor}
@@ -508,6 +524,18 @@ const Map = () => {
                 border: "2px solid black",
               }}
             />
+            {deviceMarker && (
+              <Marker
+                position={deviceMarker}
+                icon={
+                  new L.Icon({
+                    iconUrl: markerIconPng,
+                    iconSize: [30, 46],
+                    iconAnchor: [15, 46],
+                  })
+                }
+              />
+            )}
             {zonesList.map((x, index) => {
               return (
                 <Rectangle

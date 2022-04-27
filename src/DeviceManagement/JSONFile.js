@@ -136,6 +136,9 @@ function DeviceManagement(props) {
   const onNodeClick = (nodeInfo) => {
     let location;
     let coordinates;
+    if (nodeInfo.node._type === "Resource:ns0__Equipment") {
+      props.openPaneFromDevice(nodeInfo.node);
+    }
     if (nodeInfo.node.hasOwnProperty("location")) {
       location = nodeInfo.node.location;
       // console.log(location);
