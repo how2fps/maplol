@@ -377,19 +377,27 @@ export const ScheduleListBody = styled.div`
   grid-gap: 0.5rem;
 `;
 
-export const SidePaneDevice = styled.div`
+export const SidePaneDevice = styled.li`
   background: #27293d;
   padding: 3px;
-  align-items: center;
-  justify-items: center;
   cursor: pointer;
   color: white;
   margin: 4px 0;
 `;
 
-export const SidePaneDeviceList = styled.div`
-  padding: 3px;
-  align-items: center;
-  justify-items: center;
-  overflow: scroll;
+export const SidePaneDeviceList = styled.ul`
+  padding: 0;
+`;
+
+export const SidePane = styled.div``;
+
+export const Container = styled.div`
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+`;
+
+export const Controls = styled.div`
+  padding: 20px;
+  width: 40%;
 `;

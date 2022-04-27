@@ -4,10 +4,13 @@ import "leaflet/dist/leaflet.css";
 import "react-sliding-side-panel/src/index.css";
 import "react-sortable-tree/style.css";
 
+import { Icon } from "@material-ui/core";
+import ArrowBack from "@mui/icons-material/ArrowBackIosNew";
+import CloseIcon from "@mui/icons-material/Close";
 import L, { CRS, LatLngBounds } from "leaflet";
 import { useEffect, useState } from "react";
 import { ImageOverlay, MapContainer, Marker, Rectangle, useMapEvents } from "react-leaflet";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useHistory, useLocation } from "react-router-dom";
 import Select from "react-select";
 import SlidingPanel from "react-sliding-side-panel";
 
@@ -15,6 +18,7 @@ import { computeToPixels } from "./computeToPixels";
 import DeviceManagement, { getTitleFromJSON } from "./JSONFile";
 import data from "./rivervale.json";
 import SceneMain from "./SceneMain";
+import { Container, Controls, SidePane, SidePaneDevice, SidePaneDeviceList } from "./styled";
 
 export const SCHOOL_DUMMY_LIST = [
   {
@@ -55,8 +59,8 @@ function MyComponent() {
   return null;
 }
 
-const Map2 = () => {
-  const navigate = useNavigate();
+const Map = () => {
+  const history = useHistory();
   const { state } = useLocation();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -76,40 +80,19 @@ const Map2 = () => {
     open: false,
     info: { title: "" },
     from: "",
+    previousState: null,
   });
 
   useEffect(() => {
     setIsLoading(true);
+
+    //to invert Y axis
+    L.CRS.XY = L.Util.extend({}, L.CRS.Simple, {
+      code: "XY",
+      projection: L.Projection.LonLat,
+      transformation: new L.Transformation(1, 0, 1, 0),
+    });
     const arrayOfDifferentBuildings = data[0].ns0__islocationof;
-    // const updatedListOfZones = listOfZones.map((x) => {
-    //   const updatedCoordinates = computeToPixels({
-    //     lat: x.lat,
-    //     long: x.long,
-    //   });
-    //   x.lat = updatedCoordinates[0];
-    //   x.long = updatedCoordinates[1];
-    //   return x;
-    // });
-    // setZonesList(updatedListOfZones);
-
-    //
-
-    // const list = [
-    //   { name: "Test 1", long: 103.904698, lat: 1.393119 },
-    //   { name: "Test 2", long: 103.904764, lat: 1.392965 },
-    // ].map((x) => {
-    //   const updatedCoordinates = computeToPixels({
-    //     lat: x.lat,
-    //     long: x.long,
-    //   });
-    //   // console.log(updatedCoordinates);
-    //   x.lat = updatedCoordinates[0];
-    //   x.long = updatedCoordinates[1];
-    //   return x;
-    // });
-    // setZonesList(list);
-
-    //
 
     const floorBuildings = arrayOfDifferentBuildings
       .map((x) => {
@@ -122,7 +105,7 @@ const Map2 = () => {
 
     setAmountOfFloors(Math.max(...lengths));
     if (state) {
-      setSelectedSchool(state);
+      setSelectedSchool(state.state);
     }
     setSchools(SCHOOL_DUMMY_LIST);
     setSchoolData(data);
@@ -170,6 +153,7 @@ const Map2 = () => {
         device.location = JSON.parse(
           device.ns0__hasassociatedtag[0].ns0__hasValue[0].split("'").join('"')
         );
+
         return device;
       });
       return locationObject;
@@ -216,19 +200,19 @@ const Map2 = () => {
     }
   }, [selectedFloor, map]);
 
+  //to send data after redirecting
   const onSearchHandler = (e) => {
-    //to send data after redirecting
-    navigate("../DeviceManagement", { state: e });
+    history.push("../DeviceManagement", { state: e });
   };
 
+  //floor change after user selects
   const onFloorChange = (e) => {
-    //floor change after user selects
     setSelectedFloor(e.value.key);
   };
 
+  //not used atm, plots rectangle on map when tree node is clicked on
+  //based on upper left and bottom right latlng
   const plotMarkerOnClick = (ulLat, ulLong, blLat, blLong) => {
-    //not used atm, plots rectangle on map when tree node is clicked on
-    //based on upper left and bottom right latlng
     const newUpperCoords = computeToPixels({ lat: ulLat, long: ulLong });
     const newBottomCoords = computeToPixels({ lat: blLat, long: blLong });
     L.rectangle([
@@ -249,71 +233,190 @@ const Map2 = () => {
   }
 
   //CURRENTLY WORKING ON
+
+  //open pane when click on tree
   const openPaneFromTree = (clickedInfo) => {
-    if (clickedInfo._type === "Resource:ns0__Zone") {
-      clickedInfo.devices = clickedInfo.children;
-    }
-    setPane({ open: true, info: clickedInfo, from: "tree" });
+    if (clickedInfo._type !== "Resource:ns0__Zone") return;
+    setPane({ ...state, open: true, info: clickedInfo, from: "tree" });
   };
 
+  //open pane when click on map
   const openPaneFromMap = (clickedInfo) => {
-    setPane({ open: true, info: clickedInfo, from: "map" });
+    setPane({ ...state, open: true, info: clickedInfo, from: "map" });
+  };
+
+  //open side panel when clicked on device
+  //saved prevState to go back to zone
+  const openPaneFromDevice = (clickedInfo) => {
+    setPane((prevState) => {
+      return {
+        open: true,
+        info: clickedInfo,
+        from: "device",
+        previousState: prevState,
+      };
+    });
+  };
+
+  //back option to zone side pane from device side pane
+  const backFromDevice = () => {
+    setPane((prevState) => {
+      const previousState = prevState.previousState;
+      return {
+        ...prevState,
+        from: previousState.from,
+        info: previousState.info,
+        open: true,
+      };
+    });
+  };
+
+  //close side pane
+  const closeSidePanel = () => {
+    setPane((prevState) => {
+      return { ...prevState, open: false };
+    });
+  };
+
+  //convert the device json so that they are the same
+  const convertDeviceJSON = (deviceJSON) => {
+    let updatedDeviceJSON = deviceJSON;
+    updatedDeviceJSON = JSON.parse(
+      JSON.stringify(updatedDeviceJSON)
+        .split('"ns0__haspoint"')
+        .join('"children"')
+    );
+    updatedDeviceJSON = JSON.parse(
+      JSON.stringify(updatedDeviceJSON).split('"uri"').join('"title"')
+    );
+    updatedDeviceJSON = JSON.parse(
+      JSON.stringify(updatedDeviceJSON)
+        .split('"ns0__hasassociatedtag"')
+        .join('"location"')
+    );
+    delete updatedDeviceJSON["ns0__hasassociatedtag"];
+    return updatedDeviceJSON;
+  };
+
+  //capitalize first letter of word
+  const capitalize = (word) => {
+    // console.log(word);
+    if (word !== null && word.length > 0) {
+      return word
+        .split(" ")
+        .map((word) => {
+          return word[0].toUpperCase() + word.substring(1);
+        })
+        .join(" ");
+    }
+  };
+
+  const nameOfZoneAsIcon = (zone) => {
+    return L.divIcon({
+      html:
+        "<b class='icon-title'>" +
+        zone.title
+          .split(" ")
+          .map((word) => {
+            return word[0].toUpperCase() + word.substring(1);
+          })
+          .join(" ") +
+        "</b>",
+      className: "divIcon",
+    });
+  };
+
+  const DeviceStatus = (x) => {
+    return x.children.map((y) => {
+      return <div>{y.ns0__timeseries[0]}</div>;
+    });
   };
 
   const DetailsSlider = () => {
-    if (!isLoading) {
+    if (!isLoading && pane.from === "device") {
+      let convertedDeviceInfo = convertDeviceJSON(pane.info);
+      console.log(convertedDeviceInfo);
       return (
         <SlidingPanel
+          panelContainerClassName="sliding-panel-container"
+          panelClassName="sliding-panel"
           SlidingPanel={true}
           noBackdrop={true}
           isOpen={pane.open}
           type="right"
           size="30">
-          <div
-            style={{
-              border: "black 4px solid",
-              background: "white",
-              height: "100%",
-            }}>
-            <button
-              onClick={() =>
-                setPane((prevState) => {
-                  return { ...prevState, open: false };
-                })
-              }>
-              CLOSE
-            </button>
-            <h1>
-              {pane.from === "tree"
-                ? getTitleFromJSON(pane.info)
-                : pane.info.title}
-            </h1>
-            {pane.from === "tree" ? (
-              pane.info._type === "Resource:ns0__Zone" && <SceneMain />
-            ) : (
-              <SceneMain />
-            )}
-            {pane.info.devices && (
-              <>
-                <h2>Devices</h2>
+          <button onClick={backFromDevice}>
+            <ArrowBack />
+          </button>
+          <button onClick={closeSidePanel}>
+            <CloseIcon />
+          </button>
+          <h1>{getTitleFromJSON(convertedDeviceInfo)}</h1>
+          <h2>Status</h2>
+          {convertedDeviceInfo.children.map((y) => {
+            return <div style={{ width: "100%" }}>{y.title}</div>;
+          })}
+          <ul></ul>
+        </SlidingPanel>
+      );
+    }
+    if (!isLoading) {
+      return (
+        <SlidingPanel
+          panelContainerClassName="sliding-panel-container"
+          panelClassName="sliding-panel"
+          SlidingPanel={true}
+          noBackdrop={true}
+          isOpen={pane.open}
+          type="right"
+          size="30">
+          <button onClick={closeSidePanel}>
+            <CloseIcon />
+          </button>
+          <h1>
+            {pane.from === "tree"
+              ? getTitleFromJSON(pane.info)
+              : capitalize(pane.info.title)}
+          </h1>
+          {pane.from === "tree" ? (
+            pane.info._type === "Resource:ns0__Zone" && <SceneMain />
+          ) : (
+            <SceneMain />
+          )}
+          {pane.info && (pane.info.children || pane.info.devices) && (
+            <>
+              <h2>Devices</h2>
+              <SidePaneDeviceList>
                 {pane.from === "tree" &&
-                  pane.info.devices.map((x, index) => {
-                    return <div key={index}>{getTitleFromJSON(x)}</div>;
+                  pane.info.children.map((x, index) => {
+                    return (
+                      <SidePaneDevice
+                        key={index}
+                        onClick={() => openPaneFromDevice(x)}>
+                        {getTitleFromJSON(x)}
+                      </SidePaneDevice>
+                    );
                   })}
                 {pane.from === "map" &&
                   pane.info.devices.map((x, index) => {
-                    return <div key={index}>{getTitleFromJSONDevice(x)}</div>;
+                    return (
+                      <SidePaneDevice
+                        key={index}
+                        onClick={() => openPaneFromDevice(x)}>
+                        {getTitleFromJSONDevice(x)}
+                      </SidePaneDevice>
+                    );
                   })}
-              </>
-            )}
-          </div>
+              </SidePaneDeviceList>
+            </>
+          )}
         </SlidingPanel>
       );
     }
   };
 
   //changed x.title to x.uri to make it work for devices
-  //when opened
+  //when opened from map
   const getTitleFromJSONDevice = (x) => {
     let title = x.uri;
     let newTitle = title.split("/")[title.split("/").length - 1];
@@ -324,13 +427,6 @@ const Map2 = () => {
         " (" +
         JSON.parse(x.ns0__hasTag[0].replace(/'/g, '"')).Description +
         ")";
-    }
-    if (x.ns0__hasassociatedtag !== undefined) {
-      const coord = JSON.parse(
-        x.ns0__hasassociatedtag[0].ns0__hasValue[0].replace(/'/g, '"')
-      );
-      newTitle +=
-        " (Long:" + coord.Longtitude + " Lat: " + coord.Latitude + ")";
     }
     return newTitle
       .split(" ")
@@ -345,10 +441,9 @@ const Map2 = () => {
   return (
     <>
       <DetailsSlider />
-      {!isLoading && schoolData && zonesList ? (
-        <div
-          style={{ display: "flex", flex: "row", width: "100%", zIndex: "10" }}>
-          <div style={{ padding: "20px", width: "40%" }}>
+      {!isLoading && schoolData && zonesList && (
+        <Container>
+          <Controls>
             <h1>Schools</h1>
             <Select
               style={{ width: "100%" }}
@@ -380,13 +475,13 @@ const Map2 = () => {
               selectedFloor={selectedFloor}
               schoolData={schoolData}
             />
-          </div>
+          </Controls>
           <MapContainer
             maxZoom={7}
             zoom={1}
             minZoom={1}
-            crs={CRS.Simple}
-            center={[0, 0]}
+            crs={L.CRS.XY}
+            center={[250, 250]}
             style={{
               height: "90vh",
               width: "60%",
@@ -395,8 +490,8 @@ const Map2 = () => {
             }}
             maxBounds={
               new LatLngBounds([
-                [500, 0],
-                [0, 500],
+                [750, -250],
+                [-250, 750],
               ])
             }
             whenCreated={setMap}>
@@ -422,9 +517,7 @@ const Map2 = () => {
                       openPaneFromMap(x);
                     },
                   }}
-                  fillOpacity={0.1}
-                  border={false}
-                  color={"blue"}
+                  stroke={false}
                   bounds={[
                     [x.UpperLeftLat, x.UpperLeftLong],
                     [x.BottomRightLat, x.BottomRightLong],
@@ -440,20 +533,15 @@ const Map2 = () => {
                         openPaneFromMap(x);
                       },
                     }}
-                    icon={L.divIcon({
-                      html: "<b class='icon-title'>" + x.title + "</b>",
-                      className: "divIcon",
-                    })}></Marker>
+                    icon={nameOfZoneAsIcon(x)}></Marker>
                 </Rectangle>
               );
             })}
-            <MyComponent />
+            {/* <MyComponent /> */}
           </MapContainer>
-        </div>
-      ) : (
-        <div></div>
+        </Container>
       )}
     </>
   );
 };
-export default Map2;
+export default Map;

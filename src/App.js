@@ -1,20 +1,24 @@
-import "react-sortable-tree/style.css";
 import "antd/dist/antd.css";
+import "react-sortable-tree/style.css";
 
-import { Route, Routes } from "react-router-dom";
+import { Redirect, Route, Routes } from "react-router-dom";
 
-import DeviceManagement from "./Map/JSONFile";
-import Map from "./Map/Map";
-import SingaporeMap from "./Map/SingaporeMap";
+import Map from "./DeviceManagement/Map";
+import SingaporeMap from "./DeviceManagement/SingaporeMap";
 
+// import DeviceManagement from "./DeviceManagement/JSONFile";
 function App() {
   return (
     <div>
-      <Routes>
-        <Route path="/DeviceManagement" element={<SingaporeMap />} />
-        <Route path="/DeviceManagement/:schoolName" element={<Map />} />
-        <Route path="/" element={<DeviceManagement />} />
-      </Routes>
+      <Route path="/DeviceManagement/:schoolName">
+        <Map />
+      </Route>
+      <Route exact path="/DeviceManagement">
+        <SingaporeMap />
+      </Route>
+      <Route exact path="/">
+        <Redirect to={{ pathname: "/DeviceManagement" }} />
+      </Route>
     </div>
   );
 }

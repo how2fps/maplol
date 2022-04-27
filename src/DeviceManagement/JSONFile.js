@@ -44,7 +44,6 @@ export const getTitleFromJSON = (node) => {
         " (TimeSeriesId: " + node.ns0__timeseries[0].ns0__hasTimeseriesId + ")";
     }
   }
-
   return newTitle
     .split(" ")
     .map((word) => {

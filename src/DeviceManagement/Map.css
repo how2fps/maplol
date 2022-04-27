@@ -1,4 +1,3 @@
-@import "antd/dist/antd.css";
 .ReactModal {
   z-index: 2000 !important;
 }
@@ -50,4 +49,14 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+}
+
+.sliding-panel-container {
+  padding: 3px;
+  box-shadow: -2px 0 10px 0px #888888;
+  background: white;
+  width: 100%;
+}
+.sliding-panel {
+  overflow: scroll;
 }

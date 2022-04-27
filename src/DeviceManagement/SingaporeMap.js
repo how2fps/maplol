@@ -5,7 +5,7 @@ import L from "leaflet";
 import markerIconPng from "leaflet/dist/images/marker-icon.png";
 import React, { useEffect, useState } from "react";
 import { MapContainer, Marker, Popup } from "react-leaflet";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useHistory, useLocation } from "react-router-dom";
 import Select from "react-select";
 
 import { SCHOOL_DUMMY_LIST } from "./Map";
@@ -16,7 +16,7 @@ export default function SingaporeMap() {
   const [selectedSchool, setSelectedSchool] = useState(null);
   const position = [1.352083, 103.819839]; //center of SG
   const [map, setMap] = useState(null);
-  const navigate = useNavigate();
+  const history = useHistory();
   const { state } = useLocation();
 
   useEffect(() => {
@@ -26,6 +26,8 @@ export default function SingaporeMap() {
       const osm = L.TileLayer.boundaryCanvas(
         "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
         {
+          //this boundary is to cut the map to only show singapore, disabled
+          //because the cut is not accurate and clean
           // boundary: singaporeGSON,
           attribution:
             '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a>',
@@ -36,12 +38,15 @@ export default function SingaporeMap() {
       map.fitBounds(sgLayer.getBounds());
     };
     fetchGeoJSON();
+
+    console.log(state);
+    //to search the school after redirected from floorplan
     if (state) onSearchHandler(state);
     window.history.replaceState({}, document.title);
   }, [map]);
 
   const toDetailsHandler = (schoolName, school) => {
-    navigate(schoolName, {
+    history.push(`DeviceManagement/${schoolName}`, {
       state: {
         value: school.latLng,
         label: school.name,
@@ -50,9 +55,10 @@ export default function SingaporeMap() {
   };
 
   const onSearchHandler = (e) => {
+    const state = e.state;
     map.closePopup();
-    setSelectedSchool(e);
-    var latLng = e.value;
+    setSelectedSchool(state);
+    var latLng = state.value;
     var markerBounds = L.latLngBounds([latLng]);
     map.flyTo(latLng, 15);
     // map.fitBounds([[0, 0]]); //to reset map or close by schools fitBounds act weird
