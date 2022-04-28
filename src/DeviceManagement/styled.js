@@ -431,4 +431,5 @@ export const TreeContainer = styled.div`
   overflow: scroll;
   flex: 1 1 auto;
   margin: 20px 0 0 0;
+  cursor: grab;
 `;

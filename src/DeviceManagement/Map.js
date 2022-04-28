@@ -349,7 +349,6 @@ const Map = () => {
     const mapWidth = windowSize.width * mapSizePercentage;
     const paneWidth = windowSize.width * sidePaneSizePercentage;
     const offsetZoomMultipler = Math.pow(mapZoom, 2);
-    console.log(offsetZoomMultipler);
     const offsetSize = (mapWidth - paneWidth) / 2 / offsetZoomMultipler;
     map.flyTo(
       [updatedLongLat.updatedLat, updatedLongLat.updatedLong + offsetSize],
@@ -475,6 +474,23 @@ const Map = () => {
               onChange={onSearchHandler}
               value={selectedSchool}
               isOptionSelected={true}
+              styles={{
+                control: (provided, state) => ({
+                  ...provided,
+                  cursor: "text",
+                }),
+                option: (provided, state) => ({
+                  ...provided,
+                  cursor: "pointer",
+                }),
+                dropdownIndicator: (provided, state) => {
+                  return {
+                    ...provided,
+                    color: "#121524",
+                    "&:hover": { color: "#121524" },
+                  };
+                },
+              }}
             />
             <Header2 style={{ marginTop: "20px" }}>Floors</Header2>
             <Select
@@ -487,9 +503,27 @@ const Map = () => {
                   return { value: floor, label: floor };
                 })[0]
               }
+              isSearchable={false}
               value={selectedFloorInput}
               onChange={onFloorChange}
               isOptionSelected={true}
+              styles={{
+                control: (provided, state) => ({
+                  ...provided,
+                  cursor: "pointer",
+                }),
+                option: (provided, state) => ({
+                  ...provided,
+                  cursor: "pointer",
+                }),
+                dropdownIndicator: (provided, state) => {
+                  return {
+                    ...provided,
+                    color: "#121524",
+                    "&:hover": { color: "#121524" },
+                  };
+                },
+              }}
             />
             <Header2 style={{ marginTop: "20px" }}>
               Locations and Devices

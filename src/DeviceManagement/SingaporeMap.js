@@ -87,6 +87,23 @@ export default function SingaporeMap() {
             menuIsOpen
             minMenuHeight={"10vh"}
             maxMenuHeight={"40vh"}
+            styles={{
+              control: (provided, state) => ({
+                ...provided,
+                cursor: "text",
+              }),
+              option: (provided, state) => ({
+                ...provided,
+                cursor: "pointer",
+              }),
+              dropdownIndicator: (provided, state) => {
+                return {
+                  ...provided,
+                  color: "#121524",
+                  "&:hover": { color: "#121524" },
+                };
+              },
+            }}
           />
         </div>
         <MapContainer
