@@ -4,12 +4,10 @@ import "leaflet/dist/leaflet.css";
 import "react-sliding-side-panel/src/index.css";
 import "react-sortable-tree/style.css";
 
-import { Icon } from "@material-ui/core";
 import ArrowBack from "@mui/icons-material/ArrowBackIosNew";
 import CloseIcon from "@mui/icons-material/Close";
-import L, { CRS, LatLngBounds } from "leaflet";
+import L, { LatLngBounds } from "leaflet";
 import markerIconPng from "leaflet/dist/images/marker-icon.png";
-import React, { component } from "react";
 import { useEffect, useState } from "react";
 import { ImageOverlay, MapContainer, Marker, Rectangle, useMapEvents } from "react-leaflet";
 import { useHistory, useLocation } from "react-router-dom";
@@ -52,7 +50,7 @@ export const SCHOOL_DUMMY_LIST = [
 
 //component that console.logs out latlng when map is clicked
 //z-index issues if it is present so only turn it on when needed
-function MyComponent() {
+function ShowCoordsOnClick() {
   useMapEvents({
     click: (e) => {
       console.log(e.latlng);
@@ -68,10 +66,11 @@ const Map = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [map, setMap] = useState(null);
   const [imageSrc, setImageSrc] = useState("");
-  const [imageWidth, setImageWidth] = useState(0);
-  const [imageHeight, setImageHeight] = useState(0);
+  const [imageWidth, setImageWidth] = useState(null);
+  const [imageHeight, setImageHeight] = useState(null);
   const [amountOfFloors, setAmountOfFloors] = useState(1);
   const [selectedFloor, setSelectedFloor] = useState(1);
+  const [selectedFloorInput, setSelectedFloorInput] = useState();
   const [selectedSchool, setSelectedSchool] = useState(null);
   const [schools, setSchools] = useState([]);
   const [schoolData, setSchoolData] = useState(null);
@@ -119,90 +118,95 @@ const Map = () => {
   useEffect(() => {
     //Main useEffect to find out all the different zones each floor with updated coords
     //and the devices each zones have
-    setIsLoading(true);
-    const arrayOfDifferentBuildings = data[0].ns0__islocationof;
-    const floorBuildings = arrayOfDifferentBuildings.map((x) => {
-      if (x.ns0__islocationof) {
-        return x.ns0__islocationof.filter((y) => {
-          return y.uri.includes(`floor_${selectedFloor}`);
-        });
-      }
-    });
-    const filteredUndefineFloorBuilding = floorBuildings.filter(
-      (x) => x !== undefined
-    );
-    let floorBuildingsFixed = filteredUndefineFloorBuilding.map((x) => x[0]);
-
-    let roomsOnFloor = floorBuildingsFixed.map((x) => {
-      if (x.ns0__islocationof) {
-        return x.ns0__islocationof[0].ns0__islocationof;
-      }
-    });
-    roomsOnFloor = roomsOnFloor.filter((x) => x !== undefined);
-    roomsOnFloor = roomsOnFloor.flat();
-
-    const locationObjects = roomsOnFloor.map((x) => {
-      const locationObject = JSON.parse(
-        x.ns0__hasassociatedtag[0].ns0__hasValue[0].split("'").join('"')
+    const setMapFunc = async () => {
+      setIsLoading(true);
+      const arrayOfDifferentBuildings = data[0].ns0__islocationof;
+      const floorBuildings = arrayOfDifferentBuildings.map((x) => {
+        if (x.ns0__islocationof) {
+          return x.ns0__islocationof.filter((y) => {
+            return y.uri.includes(`floor_${selectedFloor}`);
+          });
+        }
+      });
+      const filteredUndefineFloorBuilding = floorBuildings.filter(
+        (x) => x !== undefined
       );
-      locationObject.title = x.uri;
+      let floorBuildingsFixed = filteredUndefineFloorBuilding.map((x) => x[0]);
 
-      //fixing json for devices
-      locationObject.devices = x.ns0__haslocation.map((device) => {
-        device.description = JSON.parse(
-          device.ns0__hasTag[0].split("'").join('"')
+      let roomsOnFloor = floorBuildingsFixed.map((x) => {
+        if (x.ns0__islocationof) {
+          return x.ns0__islocationof[0].ns0__islocationof;
+        }
+      });
+      roomsOnFloor = roomsOnFloor.filter((x) => x !== undefined);
+      roomsOnFloor = roomsOnFloor.flat();
+
+      const locationObjects = roomsOnFloor.map((x) => {
+        const locationObject = JSON.parse(
+          x.ns0__hasassociatedtag[0].ns0__hasValue[0].split("'").join('"')
         );
-        device.description = device.description.Description;
-        device.location = JSON.parse(
-          device.ns0__hasassociatedtag[0].ns0__hasValue[0].split("'").join('"')
-        );
+        locationObject.title = x.uri;
 
-        return device;
-      });
-      return locationObject;
-    });
+        //fixing json for devices
+        locationObject.devices = x.ns0__haslocation.map((device) => {
+          device.description = JSON.parse(
+            device.ns0__hasTag[0].split("'").join('"')
+          );
+          device.description = device.description.Description;
+          device.location = JSON.parse(
+            device.ns0__hasassociatedtag[0].ns0__hasValue[0]
+              .split("'")
+              .join('"')
+          );
 
-    //updating latlng with computeToPixels function
-    const updatedCoordsObjects = locationObjects.map((x) => {
-      const updatedUpperLeftCoords = computeToPixels({
-        long: x.UpperLeftLong,
-        lat: x.UpperLeftLat,
+          return device;
+        });
+        return locationObject;
       });
-      x.UpperLeftLat = updatedUpperLeftCoords[0];
-      x.UpperLeftLong = updatedUpperLeftCoords[1];
-      const updatedBottomRightCoords = computeToPixels({
-        long: x.BottomRightLong,
-        lat: x.BottomRightLat,
-      });
-      x.BottomRightLat = updatedBottomRightCoords[0];
-      x.BottomRightLong = updatedBottomRightCoords[1];
-      let newTitle = x.title.split("/")[x.title.split("/").length - 1];
-      newTitle = newTitle.replaceAll("_", " ");
-      x.title = newTitle;
-      return x;
-    });
 
-    //Loading image "dynamically"
-    const img = new Image();
-    // const imgSrc = process.env.PUBLIC_URL + `/RVPSFloorplans/RVPS - FP0${selectedFloor}.png`;
-    const imgSrc =
-      process.env.PUBLIC_URL +
-      `/RVPSFloorplans/rvv-floor${selectedFloor}_rotated.png`;
-    img.src = imgSrc;
-    setImageWidth(img.width);
-    setImageHeight(img.height);
-    setImageSrc(imgSrc);
-    if (!map) {
+      //updating latlng with computeToPixels function
+      const updatedCoordsObjects = locationObjects.map((x) => {
+        const updatedUpperLeftCoords = computeToPixels({
+          long: x.UpperLeftLong,
+          lat: x.UpperLeftLat,
+        });
+        x.UpperLeftLong = updatedUpperLeftCoords[0];
+        x.UpperLeftLat = updatedUpperLeftCoords[1];
+        const updatedBottomRightCoords = computeToPixels({
+          long: x.BottomRightLong,
+          lat: x.BottomRightLat,
+        });
+        x.BottomRightLong = updatedBottomRightCoords[0];
+        x.BottomRightLat = updatedBottomRightCoords[1];
+        let newTitle = x.title.split("/")[x.title.split("/").length - 1];
+        newTitle = newTitle.replaceAll("_", " ");
+        x.title = newTitle;
+        return x;
+      });
+
+      //Loading image "dynamically"
+      const img = new Image();
+      // const imgSrc = process.env.PUBLIC_URL + `/RVPSFloorplans/RVPS - FP0${selectedFloor}.png`;
+      const imgSrc =
+        process.env.PUBLIC_URL +
+        `/RVPSFloorplans/rvv-floor${selectedFloor}_rotated.png`;
+      img.src = imgSrc;
+      await img.decode();
+      setImageWidth(img.width); //swap this 2 around
+      setImageHeight(img.height);
+      setImageSrc(imgSrc);
+      setZonesList(updatedCoordsObjects);
+      // if (!map) {
+      //   setIsLoading(false);
+      //   return;
+      // } else {
       setIsLoading(false);
-      return;
-    } else {
-      setIsLoading(false);
-      L.map.imageSrc = imgSrc;
       // if (state) onSearchHandler(state);
       // window.history.replaceState({}, document.title);
-      setZonesList(updatedCoordsObjects);
-    }
-  }, [selectedFloor, map]);
+      // }
+    };
+    setMapFunc();
+  }, [selectedFloor]);
 
   //to send data after redirecting
   const onSearchHandler = (e) => {
@@ -211,6 +215,8 @@ const Map = () => {
 
   //floor change after user selects
   const onFloorChange = (e) => {
+    setDeviceMarker(null);
+    setSelectedFloorInput(e);
     setSelectedFloor(e.value.key);
   };
 
@@ -246,6 +252,7 @@ const Map = () => {
 
   //open pane when click on map
   const openPaneFromMap = (clickedInfo) => {
+    console.log(clickedInfo);
     setPane({ ...state, open: true, info: clickedInfo, from: "map" });
   };
 
@@ -341,10 +348,11 @@ const Map = () => {
     setDeviceMarker(null);
     const long = deviceInfo.location.Longtitude;
     const lat = deviceInfo.location.Latitude;
-    const updatedLatLong = computeToPixels({ long, lat });
+    const updatedLongLat = computeToPixels({ long, lat });
 
-    setDeviceMarker(updatedLatLong);
-    map.flyTo(updatedLatLong, 3);
+    setDeviceMarker([updatedLongLat[1], updatedLongLat[0]]);
+    //25 has to be based on pane width - map width / 2
+    map.flyTo([updatedLongLat[1], updatedLongLat[0] + 25], 3);
   };
 
   const DetailsSlider = () => {
@@ -480,6 +488,7 @@ const Map = () => {
                   return { value: floor, label: floor };
                 })[0]
               }
+              value={selectedFloorInput}
               onChange={onFloorChange}
               isOptionSelected={true}
             />
@@ -495,7 +504,7 @@ const Map = () => {
           <MapContainer
             maxZoom={7}
             zoom={1}
-            minZoom={1}
+            minZoom={0.1}
             crs={L.CRS.XY}
             center={[250, 250]}
             style={{
@@ -506,16 +515,16 @@ const Map = () => {
             }}
             maxBounds={
               new LatLngBounds([
-                [750, -250],
-                [-250, 750],
+                [(imageHeight / 10) * 2, -(imageHeight / 10) / 2],
+                [-(imageWidth / 10) / 2, (imageWidth / 10) * 2],
               ])
             }
             whenCreated={setMap}>
             <ImageOverlay
               url={imageSrc}
               bounds={[
-                [500, 0],
-                [0, 500],
+                [imageHeight / 10, 0],
+                [0, imageWidth / 10],
               ]}
               center={[0, 0]}
               style={{
@@ -565,7 +574,7 @@ const Map = () => {
                 </Rectangle>
               );
             })}
-            {/* <MyComponent /> */}
+            <ShowCoordsOnClick />
           </MapContainer>
         </Container>
       )}
