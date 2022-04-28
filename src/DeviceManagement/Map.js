@@ -4,7 +4,6 @@ import "leaflet/dist/leaflet.css";
 import "react-sliding-side-panel/src/index.css";
 import "react-sortable-tree/style.css";
 
-import ArrowBack from "@mui/icons-material/ArrowBackIosNew";
 import CloseIcon from "@mui/icons-material/Close";
 import L, { LatLngBounds } from "leaflet";
 import markerIconPng from "leaflet/dist/images/marker-icon.png";
@@ -15,10 +14,11 @@ import Select from "react-select";
 import SlidingPanel from "react-sliding-side-panel";
 
 import { computeToPixels } from "./computeToPixels";
-import DeviceManagement, { getTitleFromJSON } from "./JSONFile";
+import { useWindowSize } from "./hooks/useWindowSize";
 import data from "./rivervale.json";
 import SceneMain from "./SceneMain";
-import { Button, Container, Controls, SidePaneDevice, SidePaneDeviceList } from "./styled";
+import { Button, Container, Controls, Header1, Header2, MainContainer, SidePaneDevice, SidePaneDeviceList } from "./styled";
+import TreeView, { getTitleFromJSON } from "./TreeView";
 
 export const SCHOOL_DUMMY_LIST = [
   {
@@ -60,9 +60,15 @@ function ShowCoordsOnClick() {
 }
 
 const Map = () => {
+  const mapSizePercentage = 0.6;
+  const sidePaneSizePercentage = 0.3;
+  // const sidePaneRef = useRef(null);
+  // const mapRef = useRef(null);
+
   const history = useHistory();
   const { state } = useLocation();
 
+  const windowSize = useWindowSize();
   const [isLoading, setIsLoading] = useState(false);
   const [map, setMap] = useState(null);
   const [imageSrc, setImageSrc] = useState("");
@@ -106,7 +112,9 @@ const Map = () => {
     const lengths = floorBuildings.map((a) => a.length);
 
     setAmountOfFloors(Math.max(...lengths));
+    console.log(state);
     if (state) {
+      console.log(state);
       setSelectedSchool(state.state);
     }
     setSchools(SCHOOL_DUMMY_LIST);
@@ -170,14 +178,14 @@ const Map = () => {
           long: x.UpperLeftLong,
           lat: x.UpperLeftLat,
         });
-        x.UpperLeftLong = updatedUpperLeftCoords[0];
-        x.UpperLeftLat = updatedUpperLeftCoords[1];
+        x.UpperLeftLong = updatedUpperLeftCoords.updatedLong;
+        x.UpperLeftLat = updatedUpperLeftCoords.updatedLat;
         const updatedBottomRightCoords = computeToPixels({
           long: x.BottomRightLong,
           lat: x.BottomRightLat,
         });
-        x.BottomRightLong = updatedBottomRightCoords[0];
-        x.BottomRightLat = updatedBottomRightCoords[1];
+        x.BottomRightLong = updatedBottomRightCoords.updatedLong;
+        x.BottomRightLat = updatedBottomRightCoords.updatedLat;
         let newTitle = x.title.split("/")[x.title.split("/").length - 1];
         newTitle = newTitle.replaceAll("_", " ");
         x.title = newTitle;
@@ -259,27 +267,12 @@ const Map = () => {
   //open side panel of device status when clicked on device
   //saved prevState to go back to zone
   const openPaneFromDevice = (clickedInfo) => {
+    console.log(clickedInfo);
     panToDeviceCoords(clickedInfo);
-    setPane((prevState) => {
-      return {
-        open: true,
-        info: clickedInfo,
-        from: "device",
-        previousState: prevState,
-      };
-    });
-  };
-
-  //back option to zone side pane from device side pane
-  const backFromDevice = () => {
-    setPane((prevState) => {
-      const previousState = prevState.previousState;
-      return {
-        ...prevState,
-        from: previousState.from,
-        info: previousState.info,
-        open: true,
-      };
+    setPane({
+      open: true,
+      info: clickedInfo,
+      from: "device",
     });
   };
 
@@ -349,10 +342,19 @@ const Map = () => {
     const long = deviceInfo.location.Longtitude;
     const lat = deviceInfo.location.Latitude;
     const updatedLongLat = computeToPixels({ long, lat });
-
-    setDeviceMarker([updatedLongLat[1], updatedLongLat[0]]);
-    //25 has to be based on pane width - map width / 2
-    map.flyTo([updatedLongLat[1], updatedLongLat[0] + 25], 3);
+    console.log(updatedLongLat);
+    setDeviceMarker([updatedLongLat.updatedLat, updatedLongLat.updatedLong]);
+    //zoom level when finding devices
+    const mapZoom = 2;
+    const mapWidth = windowSize.width * mapSizePercentage;
+    const paneWidth = windowSize.width * sidePaneSizePercentage;
+    const offsetZoomMultipler = Math.pow(mapZoom, 2);
+    console.log(offsetZoomMultipler);
+    const offsetSize = (mapWidth - paneWidth) / 2 / offsetZoomMultipler;
+    map.flyTo(
+      [updatedLongLat.updatedLat, updatedLongLat.updatedLong + offsetSize],
+      mapZoom
+    );
   };
 
   const DetailsSlider = () => {
@@ -367,15 +369,12 @@ const Map = () => {
           noBackdrop={true}
           isOpen={pane.open}
           type="right"
-          size="30">
-          <Button onClick={backFromDevice}>
-            <ArrowBack />
-          </Button>
+          size={`${sidePaneSizePercentage * 100}`}>
           <Button onClick={closeSidePanel}>
-            <CloseIcon />
+            <CloseIcon fontSize="large" />
           </Button>
-          <h1>{getTitleFromJSON(convertedDeviceInfo)}</h1>
-          <h2>Status</h2>
+          <Header1>{getTitleFromJSON(convertedDeviceInfo)}</Header1>
+          <Header2>Status</Header2>
           {convertedDeviceInfo.children.map((y) => {
             return <div style={{ width: "100%" }}>{y.title}</div>;
           })}
@@ -392,15 +391,15 @@ const Map = () => {
           noBackdrop={true}
           isOpen={pane.open}
           type="right"
-          size="30">
+          size={`${sidePaneSizePercentage * 100}`}>
           <Button onClick={closeSidePanel}>
-            <CloseIcon />
+            <CloseIcon fontSize="large" />
           </Button>
-          <h1>
+          <Header1>
             {pane.from === "tree"
               ? getTitleFromJSON(pane.info)
               : capitalize(pane.info.title)}
-          </h1>
+          </Header1>
           {pane.from === "tree" ? (
             pane.info._type === "Resource:ns0__Zone" && <SceneMain />
           ) : (
@@ -408,7 +407,7 @@ const Map = () => {
           )}
           {pane.info && (pane.info.children || pane.info.devices) && (
             <>
-              <h2>Devices</h2>
+              <Header2>Devices</Header2>
               <SidePaneDeviceList>
                 {pane.from === "tree" &&
                   pane.info.children.map((x, index) => {
@@ -462,12 +461,12 @@ const Map = () => {
   //CURRENTLY WORKING ON
 
   return (
-    <>
+    <MainContainer>
       <DetailsSlider />
       {!isLoading && schoolData && zonesList && (
         <Container>
           <Controls>
-            <h1>Schools</h1>
+            <Header1>Schools</Header1>
             <Select
               style={{ width: "100%" }}
               options={schools.map((school) => {
@@ -477,7 +476,7 @@ const Map = () => {
               value={selectedSchool}
               isOptionSelected={true}
             />
-            <h2>Floors</h2>
+            <Header2 style={{ marginTop: "20px" }}>Floors</Header2>
             <Select
               style={{ width: "100%" }}
               options={FloorControls.map((floor) => {
@@ -492,8 +491,10 @@ const Map = () => {
               onChange={onFloorChange}
               isOptionSelected={true}
             />
-            <h2 style={{ marginTop: "20px" }}>Locations and Devices</h2>
-            <DeviceManagement
+            <Header2 style={{ marginTop: "20px" }}>
+              Locations and Devices
+            </Header2>
+            <TreeView
               openPaneFromDevice={openPaneFromDevice}
               openPane={openPaneFromTree}
               plotMarkerOnClick={plotMarkerOnClick}
@@ -502,14 +503,14 @@ const Map = () => {
             />
           </Controls>
           <MapContainer
-            maxZoom={7}
+            maxZoom={6}
             zoom={1}
             minZoom={0.1}
             crs={L.CRS.XY}
-            center={[250, 250]}
+            center={[imageHeight / 10 / 2, imageWidth / 10 / 2]}
             style={{
-              height: "90vh",
-              width: "60%",
+              height: "100vh",
+              width: `${mapSizePercentage * 100}%`,
               background: "grey",
               border: "2px solid black",
             }}
@@ -574,11 +575,11 @@ const Map = () => {
                 </Rectangle>
               );
             })}
-            <ShowCoordsOnClick />
+            {/* <ShowCoordsOnClick /> */}
           </MapContainer>
         </Container>
       )}
-    </>
+    </MainContainer>
   );
 };
 export default Map;

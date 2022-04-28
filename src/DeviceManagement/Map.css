@@ -52,12 +52,12 @@
 }
 
 .sliding-panel-container {
-  padding: 3px;
   box-shadow: -2px 0 10px 0px #888888;
+}
+.sliding-panel {
+  padding: 20px;
   color: white;
   background: #121524;
   width: 100%;
-}
-.sliding-panel {
   overflow: scroll;
 }

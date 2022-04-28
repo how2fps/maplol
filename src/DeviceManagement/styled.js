@@ -382,10 +382,11 @@ export const SidePaneDevice = styled.li`
   padding: 3px;
   cursor: pointer;
   color: white;
-  margin: 4px 0;
+  margin: 6px 0;
 `;
 
 export const SidePaneDeviceList = styled.ul`
+  list-style: none;
   padding: 0;
 `;
 
@@ -398,12 +399,36 @@ export const Container = styled.div`
 `;
 
 export const Controls = styled.div`
-  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  padding: 30px;
+  padding-bottom: 0px;
   width: 40%;
+  max-height: 100vh;
 `;
 export const Button = styled.button`
+  padding: 0;
   background: none;
   outline: none;
   border: none;
   cursor: pointer;
+`;
+
+export const Header1 = styled.h1`
+  color: white;
+`;
+
+export const Header2 = styled.h2`
+  color: white;
+`;
+
+export const MainContainer = styled.div`
+  background: #121524;
+  min-height: 100vh;
+`;
+
+export const TreeContainer = styled.div`
+  overflow: scroll;
+  flex: 1 1 auto;
+  margin: 20px 0 0 0;
 `;

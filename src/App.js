@@ -1,7 +1,7 @@
 import "antd/dist/antd.css";
 import "react-sortable-tree/style.css";
 
-import { Redirect, Route, Routes } from "react-router-dom";
+import { Redirect, Route } from "react-router-dom";
 
 import Map from "./DeviceManagement/Map";
 import SingaporeMap from "./DeviceManagement/SingaporeMap";

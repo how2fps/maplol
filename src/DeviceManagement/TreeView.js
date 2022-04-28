@@ -4,7 +4,7 @@ import { Icon } from "@material-ui/core";
 import React, { useEffect, useRef, useState } from "react";
 import useScrollOnDrag from "react-scroll-ondrag";
 
-import { MySortableTree, TreeNodeIcon, TreeNodeSensorCounter } from "./styled.js";
+import { MySortableTree, TreeContainer, TreeNodeIcon, TreeNodeSensorCounter } from "./styled.js";
 
 let countHolder = 0;
 
@@ -52,7 +52,7 @@ export const getTitleFromJSON = (node) => {
     .join(" ");
 };
 
-function DeviceManagement(props) {
+function TreeView(props) {
   const ref = useRef();
   const { events } = useScrollOnDrag(ref);
 
@@ -156,19 +156,19 @@ function DeviceManagement(props) {
         coordinates = coordinates.split(",}").join("}");
 
         coordinates = JSON.parse(coordinates.split("'").join('"'));
-        if (coordinates.Type === "AreaCoordinate") {
-          const UpperLeftLong = coordinates.UpperLeftLong;
-          const UpperLeftLat = coordinates.UpperLeftLat;
-          const BottomRightLong = coordinates.BottomRightLong;
-          const BottomRightLat = coordinates.BottomRightLat;
-          props.plotMarkerOnClick(
-            UpperLeftLong,
-            UpperLeftLat,
-            BottomRightLong,
-            BottomRightLat
-          );
-          //function that plots 2 points
-        }
+        // if (coordinates.Type === "AreaCoordinate") {
+        //   const UpperLeftLong = coordinates.UpperLeftLong;
+        //   const UpperLeftLat = coordinates.UpperLeftLat;
+        //   const BottomRightLong = coordinates.BottomRightLong;
+        //   const BottomRightLat = coordinates.BottomRightLat;
+        //   props.plotMarkerOnClick(
+        //     UpperLeftLong,
+        //     UpperLeftLat,
+        //     BottomRightLong,
+        //     BottomRightLat
+        //   );
+        //   //function that plots 2 points
+        // }
       }
     }
     props.openPane(nodeInfo.node);
@@ -284,14 +284,7 @@ function DeviceManagement(props) {
   // };
 
   return (
-    <div
-      {...events}
-      ref={ref}
-      style={{
-        overflow: "scroll",
-        maxHeight: "600px",
-        margin: "20px 0 20px 0",
-      }}>
+    <TreeContainer {...events} ref={ref}>
       <MySortableTree
         canDrag={false}
         isVirtualized={false}
@@ -324,8 +317,8 @@ function DeviceManagement(props) {
           ],
         })}
       />
-    </div>
+    </TreeContainer>
   );
 }
 
-export default DeviceManagement;
+export default TreeView;

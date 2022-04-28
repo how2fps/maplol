@@ -1,8 +1,11 @@
 export const computeToPixels = (map) => {
+  //first 4 variables not fixed
   const StartLAT = 1.3945;
   const StartLONG = 103.904352;
   const EndLAT = 1.393899;
   const EndLONG = 103.905355;
+
+  //your coordinates to be updated
   const TEndLONG = map.long;
   const TEndLAT = map.lat;
 
@@ -43,26 +46,25 @@ export const computeToPixels = (map) => {
       Math.sin(DeltaLong / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   const Distance = c * EarthRadius;
+  //10 is the number the map is divided by
+  //30.85 can vary depending on other maps
   const scaleFactor = 30.85 / 10;
 
-  let newLat = Distance * Math.cos(AngleBetweenRad) * scaleFactor;
-  // newLat = 500 - newLat;
-  const newLong = Distance * Math.sin(AngleBetweenRad) * scaleFactor;
+  const updatedLong = Distance * Math.cos(AngleBetweenRad) * scaleFactor;
+  const updatedLat = Distance * Math.sin(AngleBetweenRad) * scaleFactor;
 
-  return [newLong, newLat];
+  return { updatedLong, updatedLat };
 };
 
-const listOfZones = [
-  { name: "Small Room", long: 103.904141, lat: 1.393211 },
-  { name: "Sick Bay", long: 103.904131, lat: 1.393023 },
-  { name: "HOD", long: 103.904131, lat: 1.393131 },
-  { name: "VP Room", long: 103.904001, lat: 1.392993 },
-  { name: "Principal Room", long: 103.90395, lat: 1.393053 },
-  { name: "Conference Room", long: 103.904051, lat: 1.393191 },
-];
+// const listOfZones = [
+//   { name: "Small Room", long: 103.904141, lat: 1.393211 },
+//   { name: "Sick Bay", long: 103.904131, lat: 1.393023 },
+//   { name: "HOD", long: 103.904131, lat: 1.393131 },
+//   { name: "VP Room", long: 103.904001, lat: 1.392993 },
+//   { name: "Principal Room", long: 103.90395, lat: 1.393053 },
+//   { name: "Conference Room", long: 103.904051, lat: 1.393191 },
+// ];
 
-listOfZones.map((x) => {
-  console.log(computeToPixels({ long: x.long, lat: x.lat }));
-});
-
-// const bounds = new LatLngBounds([0, 500], [500, 0]);
+// listOfZones.map((x) => {
+//   console.log(computeToPixels({ long: x.long, lat: x.lat }));
+// });

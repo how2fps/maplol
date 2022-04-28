@@ -3,13 +3,14 @@ import "leaflet/dist/leaflet.css";
 
 import L from "leaflet";
 import markerIconPng from "leaflet/dist/images/marker-icon.png";
-import React, { component, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { MapContainer, Marker, Tooltip } from "react-leaflet";
 import { useHistory, useLocation } from "react-router-dom";
 import Select from "react-select";
 
 import { SCHOOL_DUMMY_LIST } from "./Map";
 import singaporeGSON from "./SingaporeGSON.json";
+import { Header1, MainContainer } from "./styled";
 
 export default function SingaporeMap() {
   const [schools, setSchools] = useState([]);
@@ -45,9 +46,9 @@ export default function SingaporeMap() {
     window.history.replaceState({}, document.title);
   }, [map]);
 
-  const toDetailsHandler = (schoolName, school, e) => {
-    console.log(e);
-    history.push(`/DeviceManagement/${schoolName}`, {
+  const toDetailsHandler = (school) => {
+    console.log(school);
+    history.push(`/DeviceManagement/${school.name}`, {
       state: {
         value: school.latLng,
         label: school.name,
@@ -72,56 +73,57 @@ export default function SingaporeMap() {
   };
 
   return (
-    <div style={{ display: "flex", flex: "row", width: "100%" }}>
-      <div style={{ padding: "20px", width: "40%" }}>
-        <h2>Schools</h2>
-        <Select
-          style={{ width: "100%" }}
-          options={schools.map((school) => {
-            return { value: school.latLng, label: school.name };
-          })}
-          onChange={(e) => onSearchHandler(e)}
-          value={selectedSchool}
-          menuIsOpen
-          minMenuHeight={"10vh"}
-          maxMenuHeight={"40vh"}
-        />
+    <MainContainer>
+      <div style={{ display: "flex", flex: "row", width: "100%" }}>
+        <div style={{ padding: "20px", width: "40%" }}>
+          <Header1>Schools</Header1>
+          <Select
+            style={{ width: "100%" }}
+            options={schools.map((school) => {
+              return { value: school.latLng, label: school.name };
+            })}
+            onChange={(e) => onSearchHandler(e)}
+            value={selectedSchool}
+            menuIsOpen
+            minMenuHeight={"10vh"}
+            maxMenuHeight={"40vh"}
+          />
+        </div>
+        <MapContainer
+          center={position}
+          maxZoom={18}
+          minZoom={11}
+          zoom={11}
+          style={{
+            height: "100vh",
+            width: "60%",
+            background: "white",
+            border: "2px solid black",
+          }}
+          whenCreated={setMap}
+          maxBounds={L.geoJSON(singaporeGSON).getBounds()}
+          maxBoundsViscosity={0.2}>
+          {SCHOOL_DUMMY_LIST.map((school, index) => (
+            <Marker
+              eventHandlers={{
+                click: () => toDetailsHandler(school),
+              }}
+              key={index}
+              position={school.latLng}
+              icon={
+                new L.Icon({
+                  iconUrl: markerIconPng,
+                  iconSize: [30, 46],
+                  iconAnchor: [15, 46],
+                })
+              }>
+              <Tooltip direction="bottom" opacity={1} permanent>
+                {school.name}
+              </Tooltip>
+            </Marker>
+          ))}
+        </MapContainer>
       </div>
-      <button onClick={() => history.push(`/DeviceManagement/hi`)}>yo</button>
-      <MapContainer
-        center={position}
-        maxZoom={18}
-        minZoom={11}
-        zoom={11}
-        style={{
-          height: "100vh",
-          width: "60%",
-          background: "white",
-          border: "2px solid black",
-        }}
-        whenCreated={setMap}
-        maxBounds={L.geoJSON(singaporeGSON).getBounds()}
-        maxBoundsViscosity={0.2}>
-        {SCHOOL_DUMMY_LIST.map((school, index) => (
-          <Marker
-            eventHandlers={{
-              click: () => history.push(`/DeviceManagement/${school.name}`),
-            }}
-            key={index}
-            position={school.latLng}
-            icon={
-              new L.Icon({
-                iconUrl: markerIconPng,
-                iconSize: [30, 46],
-                iconAnchor: [15, 46],
-              })
-            }>
-            <Tooltip direction="bottom" opacity={1} permanent>
-              {school.name}
-            </Tooltip>
-          </Marker>
-        ))}
-      </MapContainer>
-    </div>
+    </MainContainer>
   );
 }
