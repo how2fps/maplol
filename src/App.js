@@ -10,7 +10,7 @@ import SingaporeMap from "./DeviceManagement/SingaporeMap";
 function App() {
   return (
     <div>
-      <Route path="/DeviceManagement/:schoolName">
+      <Route path="/DeviceManagement/:schoolname">
         <Map />
       </Route>
       <Route exact path="/DeviceManagement">

@@ -4,6 +4,36 @@ import { Select } from "antd";
 import SortableTree from "react-sortable-tree";
 import styled from "styled-components";
 
+export const SchoolBox = styled.div`
+  padding: 0.5rem;
+  margin: 0.5rem;
+  font-size: 1.5rem;
+  border: 1px solid #676977;
+  user-select: none;
+  &:hover {
+    background-color: #3f4252;
+  }
+  cursor: pointer;
+  display: flex;
+`;
+
+export const FloorArea = styled.div`
+  display: flex;
+`;
+
+export const FloorBox = styled.div`
+  padding: 0.5rem;
+  font-size: 1rem;
+  margin: 0.5rem;
+  border: 1px solid #676977;
+  user-select: none;
+  cursor: pointer;
+  &:hover {
+    background-color: #3f4252;
+  }
+  ${(props) => props.selected && "background-color: #3F4252;"}
+`;
+
 export const MySortableTree = styled(SortableTree)`
   .rst__rowTitle {
     color: white !important;
@@ -424,11 +454,11 @@ export const Header2 = styled.h2`
 
 export const MainContainer = styled.div`
   background: #121524;
-  min-height: 100vh;
+  min-height: 90vh;
 `;
 
 export const TreeContainer = styled.div`
-  overflow: scroll;
+  overflow: auto;
   flex: 1 1 auto;
   margin: 20px 0 0 0;
   cursor: grab;

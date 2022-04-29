@@ -1,6 +1,7 @@
 import "leaflet-boundary-canvas";
 import "leaflet/dist/leaflet.css";
 
+import { Icon } from "@material-ui/core";
 import L from "leaflet";
 import markerIconPng from "leaflet/dist/images/marker-icon.png";
 import React, { useEffect, useState } from "react";
@@ -10,7 +11,7 @@ import Select from "react-select";
 
 import { SCHOOL_DUMMY_LIST } from "./Map";
 import singaporeGSON from "./SingaporeGSON.json";
-import { Header1, MainContainer } from "./styled";
+import { Header1, MainContainer, SchoolBox } from "./styled";
 
 export default function SingaporeMap() {
   const [schools, setSchools] = useState([]);
@@ -57,6 +58,7 @@ export default function SingaporeMap() {
   };
 
   const onSearchHandler = (e) => {
+    console.log(e);
     //close popup before panning because there's
     //weird interaction if popup is open and it pans to another place
     map.closePopup();
@@ -64,7 +66,10 @@ export default function SingaporeMap() {
     let latLng;
     if (e.value) latLng = e.value;
     else latLng = e;
-    map.flyTo(latLng, 15);
+    map.flyTo(latLng, 18, {
+      animate: true,
+      duration: 2
+    });
 
     //flyTo can be laggy, code below instantly pans without animation
     // var markerBounds = L.latLngBounds([latLng]);
@@ -76,15 +81,22 @@ export default function SingaporeMap() {
     <MainContainer>
       <div style={{ display: "flex", flex: "row", width: "100%" }}>
         <div style={{ padding: "20px", width: "40%" }}>
-          <Header1>Schools</Header1>
-          <Select
-            style={{ width: "100%" }}
+          <Header1>List of Schools</Header1>
+          {schools.map(school =>
+            <SchoolBox onClick={() => onSearchHandler({ value: school.latLng, label: school.name })}>
+              <div style={{ margin: "0 1rem 0 0", display: "grid", alignItems: "center" }}>
+                <Icon fontSize="large">apartment</Icon>
+              </div>
+              <div>{school.name}</div>
+            </SchoolBox>
+          )}
+          {/* <Select
+            style={{ width: "100%", color: "black" }}
             options={schools.map((school) => {
               return { value: school.latLng, label: school.name };
             })}
             onChange={(e) => onSearchHandler(e)}
             value={selectedSchool}
-            menuIsOpen
             minMenuHeight={"10vh"}
             maxMenuHeight={"40vh"}
             styles={{
@@ -104,7 +116,7 @@ export default function SingaporeMap() {
                 };
               },
             }}
-          />
+          /> */}
         </div>
         <MapContainer
           center={position}
@@ -112,11 +124,12 @@ export default function SingaporeMap() {
           minZoom={11}
           zoom={11}
           style={{
-            height: "100vh",
+            height: "90vh",
             width: "60%",
             background: "white",
             border: "2px solid black",
           }}
+          zoomControl={false}
           whenCreated={setMap}
           maxBounds={L.geoJSON(singaporeGSON).getBounds()}
           maxBoundsViscosity={0.2}>
@@ -130,8 +143,8 @@ export default function SingaporeMap() {
               icon={
                 new L.Icon({
                   iconUrl: markerIconPng,
-                  iconSize: [30, 46],
-                  iconAnchor: [15, 46],
+                  iconSize: [25, 41],
+                  iconAnchor: [12.5, 41],
                 })
               }>
               <Tooltip direction="bottom" opacity={1} permanent>

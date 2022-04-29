@@ -4,12 +4,12 @@ import "leaflet/dist/leaflet.css";
 import "react-sliding-side-panel/src/index.css";
 import "react-sortable-tree/style.css";
 
-import CloseIcon from "@mui/icons-material/Close";
+import { Icon } from "@material-ui/core";
 import L, { LatLngBounds } from "leaflet";
 import markerIconPng from "leaflet/dist/images/marker-icon.png";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ImageOverlay, MapContainer, Marker, Rectangle, useMapEvents } from "react-leaflet";
-import { useHistory, useLocation } from "react-router-dom";
+import { useHistory, useLocation, useParams } from "react-router-dom";
 import Select from "react-select";
 import SlidingPanel from "react-sliding-side-panel";
 
@@ -17,7 +17,19 @@ import { computeToPixels } from "./computeToPixels";
 import { useWindowSize } from "./hooks/useWindowSize";
 import data from "./rivervale.json";
 import SceneMain from "./SceneMain";
-import { Button, Container, Controls, Header1, Header2, MainContainer, SidePaneDevice, SidePaneDeviceList } from "./styled";
+import {
+  Button,
+  Container,
+  Controls,
+  FloorArea,
+  FloorBox,
+  Header1,
+  Header2,
+  MainContainer,
+  SchoolBox,
+  SidePaneDevice,
+  SidePaneDeviceList,
+} from "./styled";
 import TreeView, { getTitleFromJSON } from "./TreeView";
 
 export const SCHOOL_DUMMY_LIST = [
@@ -59,7 +71,7 @@ function ShowCoordsOnClick() {
   return null;
 }
 
-const Map = () => {
+const Map = (props) => {
   const mapSizePercentage = 0.6;
   const sidePaneSizePercentage = 0.3;
   // const sidePaneRef = useRef(null);
@@ -67,6 +79,7 @@ const Map = () => {
 
   const history = useHistory();
   const { state } = useLocation();
+  const { schoolname } = useParams();
 
   const windowSize = useWindowSize();
   const [isLoading, setIsLoading] = useState(false);
@@ -75,10 +88,11 @@ const Map = () => {
   const [imageWidth, setImageWidth] = useState(null);
   const [imageHeight, setImageHeight] = useState(null);
   const [amountOfFloors, setAmountOfFloors] = useState(1);
-  const [selectedFloor, setSelectedFloor] = useState(1);
-  const [selectedFloorInput, setSelectedFloorInput] = useState();
-  const [selectedSchool, setSelectedSchool] = useState(null);
-  const [schools, setSchools] = useState([]);
+  const [selectedFloor, setSelectedFloor] = useState("1");
+  //state management for selected school if using sch select and floor select
+  // const [selectedFloorInput, setSelectedFloorInput] = useState();
+  // const [selectedSchool, setSelectedSchool] = useState(null);
+  // const [schools, setSchools] = useState([]);
   const [schoolData, setSchoolData] = useState(null);
   const [zonesList, setZonesList] = useState([]);
   const [deviceMarker, setDeviceMarker] = useState(null);
@@ -112,12 +126,13 @@ const Map = () => {
     const lengths = floorBuildings.map((a) => a.length);
 
     setAmountOfFloors(Math.max(...lengths));
-    console.log(state);
-    if (state) {
-      console.log(state);
-      setSelectedSchool(state.state);
-    }
-    setSchools(SCHOOL_DUMMY_LIST);
+    //code for select for schools
+    // console.log(state);
+    // if (state) {
+    //   console.log(state);
+    //   setSelectedSchool(state.state);
+    // }
+    // setSchools(SCHOOL_DUMMY_LIST);
     setSchoolData(data);
     window.history.replaceState({}, document.title);
     setIsLoading(false);
@@ -217,14 +232,17 @@ const Map = () => {
   }, [selectedFloor]);
 
   //to send data after redirecting
-  const onSearchHandler = (e) => {
-    history.push("../DeviceManagement", { state: e });
-  };
+  // const onSearchHandler = (e) => {
+  //   history.push("../DeviceManagement", { state: e });
+  // };
 
   //floor change after user selects
   const onFloorChange = (e) => {
     setDeviceMarker(null);
-    setSelectedFloorInput(e);
+    setPane((prevState) => {
+      return { ...prevState, open: false };
+    });
+    // setSelectedFloorInput(e);
     setSelectedFloor(e.value.key);
   };
 
@@ -370,7 +388,7 @@ const Map = () => {
           type="right"
           size={`${sidePaneSizePercentage * 100}`}>
           <Button onClick={closeSidePanel}>
-            <CloseIcon fontSize="large" />
+            <Icon fontSize="large">close</Icon>
           </Button>
           <Header1>{getTitleFromJSON(convertedDeviceInfo)}</Header1>
           <Header2>Status</Header2>
@@ -392,7 +410,7 @@ const Map = () => {
           type="right"
           size={`${sidePaneSizePercentage * 100}`}>
           <Button onClick={closeSidePanel}>
-            <CloseIcon fontSize="large" />
+            <Icon fontSize="large">close</Icon>
           </Button>
           <Header1>
             {pane.from === "tree"
@@ -458,76 +476,25 @@ const Map = () => {
   };
 
   //CURRENTLY WORKING ON
-
   return (
     <MainContainer>
       <DetailsSlider />
-      {!isLoading && schoolData && zonesList && (
-        <Container>
-          <Controls>
-            <Header1>Schools</Header1>
-            <Select
-              style={{ width: "100%" }}
-              options={schools.map((school) => {
-                return { value: school.latLng, label: school.name };
-              })}
-              onChange={onSearchHandler}
-              value={selectedSchool}
-              isOptionSelected={true}
-              styles={{
-                control: (provided, state) => ({
-                  ...provided,
-                  cursor: "text",
-                }),
-                option: (provided, state) => ({
-                  ...provided,
-                  cursor: "pointer",
-                }),
-                dropdownIndicator: (provided, state) => {
-                  return {
-                    ...provided,
-                    color: "#121524",
-                    "&:hover": { color: "#121524" },
-                  };
-                },
-              }}
-            />
-            <Header2 style={{ marginTop: "20px" }}>Floors</Header2>
-            <Select
-              style={{ width: "100%" }}
-              options={FloorControls.map((floor) => {
-                return { value: floor, label: floor };
-              })}
-              defaultValue={
-                FloorControls.map((floor) => {
-                  return { value: floor, label: floor };
-                })[0]
-              }
-              isSearchable={false}
-              value={selectedFloorInput}
-              onChange={onFloorChange}
-              isOptionSelected={true}
-              styles={{
-                control: (provided, state) => ({
-                  ...provided,
-                  cursor: "pointer",
-                }),
-                option: (provided, state) => ({
-                  ...provided,
-                  cursor: "pointer",
-                }),
-                dropdownIndicator: (provided, state) => {
-                  return {
-                    ...provided,
-                    color: "#121524",
-                    "&:hover": { color: "#121524" },
-                  };
-                },
-              }}
-            />
-            <Header2 style={{ marginTop: "20px" }}>
-              Locations and Devices
-            </Header2>
+      <Container>
+        <Controls>
+          <Header1>{schoolname}</Header1>
+          <hr />
+          <Header2 style={{ marginTop: "20px" }}>List of Floors</Header2>
+          <FloorArea>
+            {FloorControls.map((floor) => (
+              <FloorBox
+                selected={selectedFloor === floor.key}
+                onClick={() => onFloorChange({ value: floor, label: floor })}>
+                {floor}
+              </FloorBox>
+            ))}
+          </FloorArea>
+          <Header2 style={{ marginTop: "20px" }}>Device Tree</Header2>
+          {schoolData && zonesList && (
             <TreeView
               openPaneFromDevice={openPaneFromDevice}
               openPane={openPaneFromTree}
@@ -535,84 +502,86 @@ const Map = () => {
               selectedFloor={selectedFloor}
               schoolData={schoolData}
             />
-          </Controls>
-          <MapContainer
-            maxZoom={6}
-            zoom={1}
-            minZoom={0.1}
-            crs={L.CRS.XY}
-            center={[imageHeight / 10 / 2, imageWidth / 10 / 2]}
-            style={{
-              height: "100vh",
-              width: `${mapSizePercentage * 100}%`,
-              background: "grey",
-              border: "2px solid black",
-            }}
-            maxBounds={
-              new LatLngBounds([
-                [(imageHeight / 10) * 2, -(imageHeight / 10) / 2],
-                [-(imageWidth / 10) / 2, (imageWidth / 10) * 2],
-              ])
-            }
-            whenCreated={setMap}>
-            <ImageOverlay
-              url={imageSrc}
-              bounds={[
-                [imageHeight / 10, 0],
-                [0, imageWidth / 10],
-              ]}
-              center={[0, 0]}
+          )}
+        </Controls>
+        <div
+          style={{
+            height: "90vh",
+            width: `${mapSizePercentage * 100}%`,
+            background: "white",
+          }}>
+          {!isLoading && schoolData && zonesList && (
+            <MapContainer
+              maxZoom={6}
+              zoom={1}
+              minZoom={0.1}
+              crs={L.CRS.XY}
+              center={[imageHeight / 10 / 2, imageWidth / 10 / 2]}
               style={{
-                position: "absolute",
+                height: "90vh",
                 background: "white",
-                border: "2px solid black",
               }}
-            />
-            {deviceMarker && (
-              <Marker
-                position={deviceMarker}
-                icon={
-                  new L.Icon({
-                    iconUrl: markerIconPng,
-                    iconSize: [30, 46],
-                    iconAnchor: [15, 46],
-                  })
-                }
+              maxBounds={
+                new LatLngBounds([
+                  [(imageHeight / 10) * 2, -(imageHeight / 10) / 2],
+                  [-(imageWidth / 10) / 2, (imageWidth / 10) * 2],
+                ])
+              }
+              zoomControl={false}
+              whenCreated={setMap}>
+              <ImageOverlay
+                url={imageSrc}
+                bounds={[
+                  [imageHeight / 10, 0],
+                  [0, imageWidth / 10],
+                ]}
               />
-            )}
-            {zonesList.map((x, index) => {
-              return (
-                <Rectangle
-                  key={index}
-                  eventHandlers={{
-                    click: () => {
-                      openPaneFromMap(x);
-                    },
-                  }}
-                  stroke={false}
-                  bounds={[
-                    [x.UpperLeftLat, x.UpperLeftLong],
-                    [x.BottomRightLat, x.BottomRightLong],
-                  ]}>
-                  <Marker
+              {deviceMarker && (
+                <Marker
+                  position={deviceMarker}
+                  icon={
+                    new L.Icon({
+                      iconUrl: markerIconPng,
+                      iconSize: [30, 46],
+                      iconAnchor: [15, 46],
+                    })
+                  }
+                />
+              )}
+              {zonesList.map((x, index) => {
+                return (
+                  <Rectangle
                     key={index}
-                    position={[
-                      (x.UpperLeftLat + x.BottomRightLat) / 2,
-                      (x.BottomRightLong + x.UpperLeftLong) / 2,
-                    ]}
                     eventHandlers={{
                       click: () => {
                         openPaneFromMap(x);
                       },
                     }}
-                    icon={nameOfZoneAsIcon(x)}></Marker>
-                </Rectangle>
-              );
-            })}
-            {/* <ShowCoordsOnClick /> */}
-          </MapContainer>
-        </Container>
-      )}
+                    stroke={false}
+                    bounds={[
+                      [x.UpperLeftLat, x.UpperLeftLong],
+                      [x.BottomRightLat, x.BottomRightLong],
+                    ]}>
+                    <Marker
+                      key={index}
+                      position={[
+                        (x.UpperLeftLat + x.BottomRightLat) / 2,
+                        (x.BottomRightLong + x.UpperLeftLong) / 2,
+                      ]}
+                      eventHandlers={{
+                        click: () => {
+                          openPaneFromMap(x);
+                        },
+                      }}
+                      icon={nameOfZoneAsIcon(x)}></Marker>
+                  </Rectangle>
+                );
+              })}
+              {/* <ShowCoordsOnClick /> */}
+            </MapContainer>
+          )}
+        </div>
+      </Container>
     </MainContainer>
   );
 };
