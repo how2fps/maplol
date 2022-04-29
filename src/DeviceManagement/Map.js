@@ -8,13 +8,7 @@ import { Icon } from "@material-ui/core";
 import L, { LatLngBounds } from "leaflet";
 import markerIconPng from "leaflet/dist/images/marker-icon.png";
 import React, { useEffect, useState } from "react";
-import {
-  ImageOverlay,
-  MapContainer,
-  Marker,
-  Rectangle,
-  useMapEvents,
-} from "react-leaflet";
+import { ImageOverlay, MapContainer, Marker, Rectangle, useMapEvents } from "react-leaflet";
 import { useHistory, useLocation, useParams } from "react-router-dom";
 import Select from "react-select";
 import SlidingPanel from "react-sliding-side-panel";
@@ -277,31 +271,17 @@ const Map = (props) => {
   //CURRENTLY WORKING ON
 
   //open pane when click on tree
-  const openPaneFromTree = (clickedInfo) => {
-    if (clickedInfo._type !== "Resource:ns0__Zone") return;
-    setPane({ ...state, open: true, info: clickedInfo, from: "tree" });
-  };
 
   //open pane when click on map
-  const openPaneFromMap = (clickedInfo) => {
-    console.log(clickedInfo);
-    setPane({ ...state, open: true, info: clickedInfo, from: "map" });
-  };
-
-  //open side panel of device status when clicked on device
-  //saved prevState to go back to zone
-  const openPaneFromDevice = (clickedInfo) => {
-    console.log(clickedInfo);
-    panToDeviceCoords(clickedInfo);
-    setPane({
-      open: true,
-      info: clickedInfo,
-      from: "device",
-    });
+  const openPane = (clickedInfo, from) => {
+    if (from === "device") {
+      panToDeviceCoords(clickedInfo);
+    }
+    setPane({ ...state, open: true, info: clickedInfo, from });
   };
 
   //close side pane
-  const closeSidePanel = () => {
+  const closePane = () => {
     setPane((prevState) => {
       return { ...prevState, open: false };
     });
@@ -362,38 +342,31 @@ const Map = (props) => {
   };
 
   const panToDeviceCoords = (deviceInfo) => {
-    if (Array.isArray(deviceInfo.location)) {
-      let location = deviceInfo.location;
-      // console.log(location);
-      if (
-        Array.isArray(location) &&
-        location[0].hasOwnProperty("coordinates")
-      ) {
-        let coordinates = location[0].coordinates[0];
+    let location = deviceInfo.location;
+    // console.log(location);
+    if (Array.isArray(location) && location[0].hasOwnProperty("coordinates")) {
+      location = location[0].coordinates[0];
 
-        //to solve errors found in JSON so it's parseable
-        coordinates = coordinates
-          .split("'BottomRightLat: ")
-          .join("'BottomRightLat': ");
-        coordinates = coordinates.split(", ,").join(",");
-        coordinates = coordinates.split(",}").join("}");
+      //to solve errors found in JSON so it's parseable
+      location = location.split("'BottomRightLat: ").join("'BottomRightLat': ");
+      location = location.split(", ,").join(",");
+      location = location.split(",}").join("}");
 
-        coordinates = JSON.parse(coordinates.split("'").join('"'));
-        // if (coordinates.Type === "AreaCoordinate") {
-        //   const UpperLeftLong = coordinates.UpperLeftLong;
-        //   const UpperLeftLat = coordinates.UpperLeftLat;
-        //   const BottomRightLong = coordinates.BottomRightLong;
-        //   const BottomRightLat = coordinates.BottomRightLat;
-        //   props.plotMarkerOnClick(
-        //     UpperLeftLong,
-        //     UpperLeftLat,
-        //     BottomRightLong,
-        //     BottomRightLat
-        //   );
-        //   //function that plots 2 points
-        // }
-        deviceInfo.location = coordinates;
-      }
+      location = JSON.parse(location.split("'").join('"'));
+      // if (coordinates.Type === "AreaCoordinate") {
+      //   const UpperLeftLong = coordinates.UpperLeftLong;
+      //   const UpperLeftLat = coordinates.UpperLeftLat;
+      //   const BottomRightLong = coordinates.BottomRightLong;
+      //   const BottomRightLat = coordinates.BottomRightLat;
+      //   props.plotMarkerOnClick(
+      //     UpperLeftLong,
+      //     UpperLeftLat,
+      //     BottomRightLong,
+      //     BottomRightLat
+      //   );
+      //   //function that plots 2 points
+      // }
+      deviceInfo.location = location;
     }
     setDeviceMarker(null);
     const long = deviceInfo.location.Longtitude;
@@ -426,13 +399,17 @@ const Map = (props) => {
           isOpen={pane.open}
           type="right"
           size={`${sidePaneSizePercentage * 100}`}>
-          <Button onClick={closeSidePanel}>
+          <Button onClick={closePane}>
             <Icon fontSize="large">close</Icon>
           </Button>
           <Header1>{getTitleFromJSON(convertedDeviceInfo)}</Header1>
           <Header2>Status</Header2>
-          {convertedDeviceInfo.children.map((y) => {
-            return <div style={{ width: "100%" }}>{y.title}</div>;
+          {convertedDeviceInfo.children.map((y, index) => {
+            return (
+              <div key={index} style={{ width: "100%" }}>
+                {y.title}
+              </div>
+            );
           })}
           <ul></ul>
         </SlidingPanel>
@@ -448,7 +425,7 @@ const Map = (props) => {
           isOpen={pane.open}
           type="right"
           size={`${sidePaneSizePercentage * 100}`}>
-          <Button onClick={closeSidePanel}>
+          <Button onClick={closePane}>
             <Icon fontSize="large">close</Icon>
           </Button>
           <Header1>
@@ -470,7 +447,7 @@ const Map = (props) => {
                     return (
                       <SidePaneDevice
                         key={index}
-                        onClick={() => openPaneFromDevice(x)}>
+                        onClick={() => openPane(x, "device")}>
                         {getTitleFromJSON(x)}
                       </SidePaneDevice>
                     );
@@ -480,7 +457,7 @@ const Map = (props) => {
                     return (
                       <SidePaneDevice
                         key={index}
-                        onClick={() => openPaneFromDevice(x)}>
+                        onClick={() => openPane(x, "device")}>
                         {getTitleFromJSONDevice(x)}
                       </SidePaneDevice>
                     );
@@ -535,8 +512,7 @@ const Map = (props) => {
           <Header2 style={{ marginTop: "20px" }}>Device Tree</Header2>
           {schoolData && zonesList && (
             <TreeView
-              openPaneFromDevice={openPaneFromDevice}
-              openPaneFromTree={openPaneFromTree}
+              openPane={openPane}
               plotMarkerOnClick={plotMarkerOnClick}
               selectedFloor={selectedFloor}
               schoolData={schoolData}
@@ -593,7 +569,7 @@ const Map = (props) => {
                     key={index}
                     eventHandlers={{
                       click: () => {
-                        openPaneFromMap(x);
+                        openPane(x, "map");
                       },
                     }}
                     stroke={false}
@@ -609,7 +585,7 @@ const Map = (props) => {
                       ]}
                       eventHandlers={{
                         click: () => {
-                          openPaneFromMap(x);
+                          openPane(x, "map");
                         },
                       }}
                       icon={nameOfZoneAsIcon(x)}></Marker>

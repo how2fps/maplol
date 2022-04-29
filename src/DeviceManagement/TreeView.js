@@ -4,12 +4,7 @@ import { Icon } from "@material-ui/core";
 import React, { useEffect, useRef, useState } from "react";
 import useScrollOnDrag from "react-scroll-ondrag";
 
-import {
-  MySortableTree,
-  TreeContainer,
-  TreeNodeIcon,
-  TreeNodeSensorCounter,
-} from "./styled.js";
+import { MySortableTree, TreeContainer, TreeNodeIcon, TreeNodeSensorCounter } from "./styled.js";
 
 let countHolder = 0;
 
@@ -140,48 +135,11 @@ function TreeView(props) {
 
   //add parent nodes
   const onNodeClick = (nodeInfo) => {
-    console.log(nodeInfo.node._type);
-    let location;
-    let coordinates;
-
-    if (nodeInfo.node.hasOwnProperty("location")) {
-      location = nodeInfo.node.location;
-      // console.log(location);
-      if (
-        Array.isArray(location) &&
-        location[0].hasOwnProperty("coordinates")
-      ) {
-        coordinates = location[0].coordinates[0];
-
-        //to solve errors found in JSON so it's parseable
-        coordinates = coordinates
-          .split("'BottomRightLat: ")
-          .join("'BottomRightLat': ");
-        coordinates = coordinates.split(", ,").join(",");
-        coordinates = coordinates.split(",}").join("}");
-
-        coordinates = JSON.parse(coordinates.split("'").join('"'));
-        // if (coordinates.Type === "AreaCoordinate") {
-        //   const UpperLeftLong = coordinates.UpperLeftLong;
-        //   const UpperLeftLat = coordinates.UpperLeftLat;
-        //   const BottomRightLong = coordinates.BottomRightLong;
-        //   const BottomRightLat = coordinates.BottomRightLat;
-        //   props.plotMarkerOnClick(
-        //     UpperLeftLong,
-        //     UpperLeftLat,
-        //     BottomRightLong,
-        //     BottomRightLat
-        //   );
-        //   //function that plots 2 points
-        // }
-        nodeInfo.node.location = coordinates;
-      }
-    }
-    //fix random error...
+    console.log(nodeInfo.node);
     if (nodeInfo.node._type === "Resource:ns0__Equipment") {
-      props.openPaneFromDevice(nodeInfo.node);
+      props.openPane(nodeInfo.node, "device");
     } else {
-      props.openPaneFromTree(nodeInfo.node);
+      props.openPane(nodeInfo.node, "tree");
     }
   };
 

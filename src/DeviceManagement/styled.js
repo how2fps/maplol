@@ -408,11 +408,16 @@ export const ScheduleListBody = styled.div`
 `;
 
 export const SidePaneDevice = styled.li`
-  background: #27293d;
-  padding: 3px;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  border: 1px solid #676977;
+  user-select: none;
+  &:hover {
+    background-color: #3f4252;
+  }
   cursor: pointer;
-  color: white;
-  margin: 6px 0;
+  display: flex;
 `;
 
 export const SidePaneDeviceList = styled.ul`
