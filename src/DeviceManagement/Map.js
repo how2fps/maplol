@@ -10,7 +10,6 @@ import markerIconPng from "leaflet/dist/images/marker-icon.png";
 import React, { useEffect, useState } from "react";
 import { ImageOverlay, MapContainer, Marker, Rectangle, useMapEvents } from "react-leaflet";
 import { useHistory, useLocation, useParams } from "react-router-dom";
-import Select from "react-select";
 import SlidingPanel from "react-sliding-side-panel";
 
 import { computeToPixels } from "./computeToPixels";
@@ -102,7 +101,7 @@ const Map = (props) => {
     open: false,
     info: { title: "" },
     from: "",
-    previousState: null,
+    type: "",
   });
 
   useEffect(() => {
@@ -275,7 +274,7 @@ const Map = (props) => {
   //open pane when click on map
   const openPane = (clickedInfo, from) => {
     if (from === "device") {
-      panToDeviceCoords(clickedInfo);
+      panToCoords(clickedInfo);
     }
     setPane({ ...state, open: true, info: clickedInfo, from });
   };
@@ -341,38 +340,29 @@ const Map = (props) => {
     });
   };
 
-  const panToDeviceCoords = (deviceInfo) => {
+  const panToCoords = (deviceInfo) => {
+    setDeviceMarker(null);
     let location = deviceInfo.location;
-    // console.log(location);
     if (Array.isArray(location) && location[0].hasOwnProperty("coordinates")) {
       location = location[0].coordinates[0];
-
       //to solve errors found in JSON so it's parseable
       location = location.split("'BottomRightLat: ").join("'BottomRightLat': ");
       location = location.split(", ,").join(",");
       location = location.split(",}").join("}");
-
       location = JSON.parse(location.split("'").join('"'));
-      // if (coordinates.Type === "AreaCoordinate") {
-      //   const UpperLeftLong = coordinates.UpperLeftLong;
-      //   const UpperLeftLat = coordinates.UpperLeftLat;
-      //   const BottomRightLong = coordinates.BottomRightLong;
-      //   const BottomRightLat = coordinates.BottomRightLat;
-      //   props.plotMarkerOnClick(
-      //     UpperLeftLong,
-      //     UpperLeftLat,
-      //     BottomRightLong,
-      //     BottomRightLat
-      //   );
-      //   //function that plots 2 points
-      // }
       deviceInfo.location = location;
     }
-    setDeviceMarker(null);
-    const long = deviceInfo.location.Longtitude;
-    const lat = deviceInfo.location.Latitude;
-    const updatedLongLat = computeToPixels({ long, lat });
-    console.log(updatedLongLat);
+    let long;
+    let lat;
+    let updatedLongLat;
+    if (location.Type === "AreaCoordinate") {
+      long = (location.UpperLeftLong + location.BottomRightLong) / 2;
+      lat = (location.UpperLeftLat + location.BottomRightLat) / 2;
+    } else {
+      long = deviceInfo.location.Longtitude;
+      lat = deviceInfo.location.Latitude;
+    }
+    updatedLongLat = computeToPixels({ long, lat });
     setDeviceMarker([updatedLongLat.updatedLat, updatedLongLat.updatedLong]);
     //zoom level when finding devices
     const mapZoom = 2;
@@ -389,7 +379,6 @@ const Map = (props) => {
   const DetailsSlider = () => {
     if (!isLoading && pane.from === "device") {
       let convertedDeviceInfo = convertDeviceJSON(pane.info);
-      console.log(convertedDeviceInfo);
       return (
         <SlidingPanel
           panelContainerClassName="sliding-panel-container"
@@ -592,7 +581,7 @@ const Map = (props) => {
                   </Rectangle>
                 );
               })}
-              {/* <ShowCoordsOnClick /> */}
+              <ShowCoordsOnClick />
             </MapContainer>
           )}
         </div>

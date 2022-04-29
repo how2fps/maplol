@@ -135,7 +135,6 @@ function TreeView(props) {
 
   //add parent nodes
   const onNodeClick = (nodeInfo) => {
-    console.log(nodeInfo.node);
     if (nodeInfo.node._type === "Resource:ns0__Equipment") {
       props.openPane(nodeInfo.node, "device");
     } else {
