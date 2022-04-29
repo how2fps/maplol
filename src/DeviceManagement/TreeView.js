@@ -4,7 +4,12 @@ import { Icon } from "@material-ui/core";
 import React, { useEffect, useRef, useState } from "react";
 import useScrollOnDrag from "react-scroll-ondrag";
 
-import { MySortableTree, TreeContainer, TreeNodeIcon, TreeNodeSensorCounter } from "./styled.js";
+import {
+  MySortableTree,
+  TreeContainer,
+  TreeNodeIcon,
+  TreeNodeSensorCounter,
+} from "./styled.js";
 
 let countHolder = 0;
 
@@ -138,9 +143,6 @@ function TreeView(props) {
     console.log(nodeInfo.node._type);
     let location;
     let coordinates;
-    if (nodeInfo.node._type === "Resource:ns0__Equipment") {
-      props.openPaneFromDevice(nodeInfo.node);
-    }
 
     if (nodeInfo.node.hasOwnProperty("location")) {
       location = nodeInfo.node.location;
@@ -172,9 +174,15 @@ function TreeView(props) {
         //   );
         //   //function that plots 2 points
         // }
+        nodeInfo.node.location = coordinates;
       }
     }
-    props.openPane(nodeInfo.node);
+    //fix random error...
+    if (nodeInfo.node._type === "Resource:ns0__Equipment") {
+      props.openPaneFromDevice(nodeInfo.node);
+    } else {
+      props.openPaneFromTree(nodeInfo.node);
+    }
   };
 
   const getFullPath = (path) => {

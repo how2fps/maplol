@@ -8,7 +8,13 @@ import { Icon } from "@material-ui/core";
 import L, { LatLngBounds } from "leaflet";
 import markerIconPng from "leaflet/dist/images/marker-icon.png";
 import React, { useEffect, useState } from "react";
-import { ImageOverlay, MapContainer, Marker, Rectangle, useMapEvents } from "react-leaflet";
+import {
+  ImageOverlay,
+  MapContainer,
+  Marker,
+  Rectangle,
+  useMapEvents,
+} from "react-leaflet";
 import { useHistory, useLocation, useParams } from "react-router-dom";
 import Select from "react-select";
 import SlidingPanel from "react-sliding-side-panel";
@@ -356,6 +362,39 @@ const Map = (props) => {
   };
 
   const panToDeviceCoords = (deviceInfo) => {
+    if (Array.isArray(deviceInfo.location)) {
+      let location = deviceInfo.location;
+      // console.log(location);
+      if (
+        Array.isArray(location) &&
+        location[0].hasOwnProperty("coordinates")
+      ) {
+        let coordinates = location[0].coordinates[0];
+
+        //to solve errors found in JSON so it's parseable
+        coordinates = coordinates
+          .split("'BottomRightLat: ")
+          .join("'BottomRightLat': ");
+        coordinates = coordinates.split(", ,").join(",");
+        coordinates = coordinates.split(",}").join("}");
+
+        coordinates = JSON.parse(coordinates.split("'").join('"'));
+        // if (coordinates.Type === "AreaCoordinate") {
+        //   const UpperLeftLong = coordinates.UpperLeftLong;
+        //   const UpperLeftLat = coordinates.UpperLeftLat;
+        //   const BottomRightLong = coordinates.BottomRightLong;
+        //   const BottomRightLat = coordinates.BottomRightLat;
+        //   props.plotMarkerOnClick(
+        //     UpperLeftLong,
+        //     UpperLeftLat,
+        //     BottomRightLong,
+        //     BottomRightLat
+        //   );
+        //   //function that plots 2 points
+        // }
+        deviceInfo.location = coordinates;
+      }
+    }
     setDeviceMarker(null);
     const long = deviceInfo.location.Longtitude;
     const lat = deviceInfo.location.Latitude;
@@ -497,7 +536,7 @@ const Map = (props) => {
           {schoolData && zonesList && (
             <TreeView
               openPaneFromDevice={openPaneFromDevice}
-              openPane={openPaneFromTree}
+              openPaneFromTree={openPaneFromTree}
               plotMarkerOnClick={plotMarkerOnClick}
               selectedFloor={selectedFloor}
               schoolData={schoolData}
