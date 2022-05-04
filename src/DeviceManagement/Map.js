@@ -9,7 +9,7 @@ import L, { LatLngBounds } from "leaflet";
 import markerIconPng from "leaflet/dist/images/marker-icon.png";
 import React, { useEffect, useState } from "react";
 import { ImageOverlay, MapContainer, Marker, Rectangle, useMapEvents } from "react-leaflet";
-import { useHistory, useLocation, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import SlidingPanel from "react-sliding-side-panel";
 
 import { computeToPixels } from "./computeToPixels";
@@ -25,39 +25,10 @@ import {
   Header1,
   Header2,
   MainContainer,
-  SchoolBox,
   SidePaneDevice,
   SidePaneDeviceList,
 } from "./styled";
 import TreeView, { getTitleFromJSON } from "./TreeView";
-
-export const SCHOOL_DUMMY_LIST = [
-  {
-    id: 1,
-    name: "Rivervale Primary School",
-    latLng: [1.3933354326156981, 103.90432935346726],
-  },
-  {
-    id: 2,
-    name: "St Hilda's Secondary School",
-    latLng: [1.350392486863309, 103.9361580344195],
-  },
-  {
-    id: 3,
-    name: "Temasek Polytechnic",
-    latLng: [1.3454239941475783, 103.93249097861609],
-  },
-  {
-    id: 4,
-    name: "Admiralty Secondary School",
-    latLng: [1.4466534139615155, 103.80259746881106],
-  },
-  {
-    id: 5,
-    name: "Jurong Primary School",
-    latLng: [1.3486575472899138, 103.73291689579524],
-  },
-];
 
 //component that console.logs out latlng when map is clicked
 //z-index issues if it is present so only turn it on when needed
@@ -76,8 +47,6 @@ const Map = (props) => {
   // const sidePaneRef = useRef(null);
   // const mapRef = useRef(null);
 
-  const history = useHistory();
-  const { state } = useLocation();
   const { schoolname } = useParams();
 
   const windowSize = useWindowSize();
@@ -230,6 +199,16 @@ const Map = (props) => {
     setMapFunc();
   }, [selectedFloor]);
 
+  //to display floor options in floor select input
+  let FloorControls = [];
+  for (var i = 1; i <= amountOfFloors; i++) {
+    FloorControls.push(
+      <option key={i} value={i}>
+        Floor {i}
+      </option>
+    );
+  }
+
   //to send data after redirecting
   // const onSearchHandler = (e) => {
   //   history.push("../DeviceManagement", { state: e });
@@ -257,26 +236,25 @@ const Map = (props) => {
     ]).addTo(map);
   };
 
-  //to display floor options in floor select input
-  let FloorControls = [];
-  for (var i = 1; i <= amountOfFloors; i++) {
-    FloorControls.push(
-      <option key={i} value={i}>
-        Floor {i}
-      </option>
-    );
-  }
-
   //CURRENTLY WORKING ON
 
   //open pane when click on tree
 
   //open pane when click on map
   const openPane = (clickedInfo, from) => {
+    console.log(clickedInfo);
     if (from === "device") {
       panToCoords(clickedInfo);
     }
-    setPane({ ...state, open: true, info: clickedInfo, from });
+    if (clickedInfo._type === "Resource:ns0__Zone") {
+      setPane((prevState) => {
+        return { ...prevState, open: true, info: clickedInfo, from };
+      });
+    } else {
+      setPane((prevState) => {
+        return { ...prevState, open: true, info: clickedInfo, from };
+      });
+    }
   };
 
   //close side pane
@@ -284,6 +262,70 @@ const Map = (props) => {
     setPane((prevState) => {
       return { ...prevState, open: false };
     });
+  };
+
+  // const DeviceStatus = (x) => {
+  //   return x.children.map((y) => {
+  //     return <div>{y.ns0__timeseries[0]}</div>;
+  //   });
+  // };
+
+  const panToCoords = (deviceInfo) => {
+    console.log(deviceInfo);
+    setDeviceMarker(null);
+    let location = deviceInfo.location;
+    if (Array.isArray(location) && location[0].hasOwnProperty("coordinates")) {
+      location = location[0].coordinates[0];
+      //to solve errors found in JSON so it's parseable
+      location = location.split("'BottomRightLat: ").join("'BottomRightLat': ");
+      location = location.split(", ,").join(",");
+      location = location.split(",}").join("}");
+      location = JSON.parse(location.split("'").join('"'));
+      deviceInfo.location = location;
+    }
+    let long;
+    let lat;
+    let updatedLongLat;
+    if (location.Type === "AreaCoordinate") {
+      long = (location.UpperLeftLong + location.BottomRightLong) / 2;
+      lat = (location.UpperLeftLat + location.BottomRightLat) / 2;
+    } else {
+      long = deviceInfo.location.Longtitude;
+      lat = deviceInfo.location.Latitude;
+    }
+    updatedLongLat = computeToPixels({ long, lat });
+    setDeviceMarker([updatedLongLat.updatedLat, updatedLongLat.updatedLong]);
+    //zoom level when finding devices
+    const mapZoom = 2;
+    const mapWidth = windowSize.width * mapSizePercentage;
+    const paneWidth = windowSize.width * sidePaneSizePercentage;
+    const offsetZoomMultipler = Math.pow(mapZoom, 2);
+    const offsetSize = (mapWidth - paneWidth) / 2 / offsetZoomMultipler;
+    map.flyTo(
+      [updatedLongLat.updatedLat, updatedLongLat.updatedLong + offsetSize],
+      mapZoom
+    );
+  };
+
+  //changed x.title to x.uri to make it work for devices
+  //when opened from map
+  const getTitleFromJSONDevice = (x) => {
+    let title = x.uri;
+    let newTitle = title.split("/")[title.split("/").length - 1];
+    newTitle = newTitle.replaceAll("_", " ");
+    newTitle += " (Device)";
+    if (x.ns0__hasTag !== undefined) {
+      newTitle +=
+        " (" +
+        JSON.parse(x.ns0__hasTag[0].replace(/'/g, '"')).Description +
+        ")";
+    }
+    return newTitle
+      .split(" ")
+      .map((word) => {
+        return word[0].toUpperCase() + word.substring(1);
+      })
+      .join(" ");
   };
 
   //convert the device json so that they are the same
@@ -332,48 +374,6 @@ const Map = (props) => {
         "</b>",
       className: "divIcon",
     });
-  };
-
-  const DeviceStatus = (x) => {
-    return x.children.map((y) => {
-      return <div>{y.ns0__timeseries[0]}</div>;
-    });
-  };
-
-  const panToCoords = (deviceInfo) => {
-    setDeviceMarker(null);
-    let location = deviceInfo.location;
-    if (Array.isArray(location) && location[0].hasOwnProperty("coordinates")) {
-      location = location[0].coordinates[0];
-      //to solve errors found in JSON so it's parseable
-      location = location.split("'BottomRightLat: ").join("'BottomRightLat': ");
-      location = location.split(", ,").join(",");
-      location = location.split(",}").join("}");
-      location = JSON.parse(location.split("'").join('"'));
-      deviceInfo.location = location;
-    }
-    let long;
-    let lat;
-    let updatedLongLat;
-    if (location.Type === "AreaCoordinate") {
-      long = (location.UpperLeftLong + location.BottomRightLong) / 2;
-      lat = (location.UpperLeftLat + location.BottomRightLat) / 2;
-    } else {
-      long = deviceInfo.location.Longtitude;
-      lat = deviceInfo.location.Latitude;
-    }
-    updatedLongLat = computeToPixels({ long, lat });
-    setDeviceMarker([updatedLongLat.updatedLat, updatedLongLat.updatedLong]);
-    //zoom level when finding devices
-    const mapZoom = 2;
-    const mapWidth = windowSize.width * mapSizePercentage;
-    const paneWidth = windowSize.width * sidePaneSizePercentage;
-    const offsetZoomMultipler = Math.pow(mapZoom, 2);
-    const offsetSize = (mapWidth - paneWidth) / 2 / offsetZoomMultipler;
-    map.flyTo(
-      [updatedLongLat.updatedLat, updatedLongLat.updatedLong + offsetSize],
-      mapZoom
-    );
   };
 
   const DetailsSlider = () => {
@@ -459,27 +459,6 @@ const Map = (props) => {
     }
   };
 
-  //changed x.title to x.uri to make it work for devices
-  //when opened from map
-  const getTitleFromJSONDevice = (x) => {
-    let title = x.uri;
-    let newTitle = title.split("/")[title.split("/").length - 1];
-    newTitle = newTitle.replaceAll("_", " ");
-    newTitle += " (Device)";
-    if (x.ns0__hasTag !== undefined) {
-      newTitle +=
-        " (" +
-        JSON.parse(x.ns0__hasTag[0].replace(/'/g, '"')).Description +
-        ")";
-    }
-    return newTitle
-      .split(" ")
-      .map((word) => {
-        return word[0].toUpperCase() + word.substring(1);
-      })
-      .join(" ");
-  };
-
   //CURRENTLY WORKING ON
   return (
     <MainContainer>
@@ -501,6 +480,7 @@ const Map = (props) => {
           <Header2 style={{ marginTop: "20px" }}>Device Tree</Header2>
           {schoolData && zonesList && (
             <TreeView
+              panToCoords={panToCoords}
               openPane={openPane}
               plotMarkerOnClick={plotMarkerOnClick}
               selectedFloor={selectedFloor}

@@ -135,10 +135,14 @@ function TreeView(props) {
 
   //add parent nodes
   const onNodeClick = (nodeInfo) => {
-    if (nodeInfo.node._type === "Resource:ns0__Equipment") {
-      props.openPane(nodeInfo.node, "device");
+    const clickedInfo = nodeInfo.node;
+    if (clickedInfo._type === "Resource:ns0__Zone") {
+      props.panToCoords(clickedInfo);
+    }
+    if (clickedInfo._type === "Resource:ns0__Equipment") {
+      props.openPane(clickedInfo, "device");
     } else {
-      props.openPane(nodeInfo.node, "tree");
+      props.openPane(clickedInfo, "tree");
     }
   };
 

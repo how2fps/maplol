@@ -7,12 +7,37 @@ import markerIconPng from "leaflet/dist/images/marker-icon.png";
 import React, { useEffect, useState } from "react";
 import { MapContainer, Marker, Tooltip } from "react-leaflet";
 import { useHistory, useLocation } from "react-router-dom";
-import Select from "react-select";
 
-import { SCHOOL_DUMMY_LIST } from "./Map";
 import singaporeGSON from "./SingaporeGSON.json";
 import { Header1, MainContainer, SchoolBox } from "./styled";
 
+const SCHOOL_DUMMY_LIST = [
+  {
+    id: 1,
+    name: "Rivervale's Secondary School",
+    latLng: [1.350392486863305, 103.9361580344195],
+  },
+  {
+    id: 2,
+    name: "St Hilda's Secondary School",
+    latLng: [1.350392486863309, 103.9361580344195],
+  },
+  {
+    id: 3,
+    name: "Temasek Polytechnic",
+    latLng: [1.3454239941475783, 103.93249097861609],
+  },
+  {
+    id: 4,
+    name: "Admiralty Secondary School",
+    latLng: [1.4466534139615155, 103.80259746881106],
+  },
+  {
+    id: 5,
+    name: "Jurong Primary School",
+    latLng: [1.3486575472899138, 103.73291689579524],
+  },
+];
 export default function SingaporeMap() {
   const [schools, setSchools] = useState([]);
   const [selectedSchool, setSelectedSchool] = useState(null);
@@ -68,7 +93,7 @@ export default function SingaporeMap() {
     else latLng = e;
     map.flyTo(latLng, 18, {
       animate: true,
-      duration: 2
+      duration: 2,
     });
 
     //flyTo can be laggy, code below instantly pans without animation
@@ -82,14 +107,22 @@ export default function SingaporeMap() {
       <div style={{ display: "flex", flex: "row", width: "100%" }}>
         <div style={{ padding: "20px", width: "40%" }}>
           <Header1>List of Schools</Header1>
-          {schools.map(school =>
-            <SchoolBox onClick={() => onSearchHandler({ value: school.latLng, label: school.name })}>
-              <div style={{ margin: "0 1rem 0 0", display: "grid", alignItems: "center" }}>
+          {schools.map((school) => (
+            <SchoolBox
+              onClick={() =>
+                onSearchHandler({ value: school.latLng, label: school.name })
+              }>
+              <div
+                style={{
+                  margin: "0 1rem 0 0",
+                  display: "grid",
+                  alignItems: "center",
+                }}>
                 <Icon fontSize="large">apartment</Icon>
               </div>
               <div>{school.name}</div>
             </SchoolBox>
-          )}
+          ))}
           {/* <Select
             style={{ width: "100%", color: "black" }}
             options={schools.map((school) => {
