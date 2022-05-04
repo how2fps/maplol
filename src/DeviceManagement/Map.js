@@ -30,7 +30,7 @@ import {
 } from "./styled";
 import TreeView, { getTitleFromJSON } from "./TreeView";
 
-//component that console.logs out latlng when map is clicked
+//component that logs out latlng when map is clicked
 //z-index issues if it is present so only turn it on when needed
 function ShowCoordsOnClick() {
   useMapEvents({
@@ -111,6 +111,7 @@ const Map = (props) => {
     //and the devices each zones have
     const setMapFunc = async () => {
       setIsLoading(true);
+
       const arrayOfDifferentBuildings = data[0].ns0__islocationof;
       const floorBuildings = arrayOfDifferentBuildings.map((x) => {
         if (x.ns0__islocationof) {
@@ -124,9 +125,38 @@ const Map = (props) => {
       );
       let floorBuildingsFixed = filteredUndefineFloorBuilding.map((x) => x[0]);
 
+      floorBuildingsFixed = JSON.parse(
+        JSON.stringify(floorBuildingsFixed).split('"uri"').join('"title"')
+      );
+      floorBuildingsFixed = JSON.parse(
+        JSON.stringify(floorBuildingsFixed)
+          .split('"ns0__islocationof"')
+          .join('"children"')
+      );
+      floorBuildingsFixed = JSON.parse(
+        JSON.stringify(floorBuildingsFixed)
+          .split('"ns0__haslocation"')
+          .join('"children"')
+      );
+      floorBuildingsFixed = JSON.parse(
+        JSON.stringify(floorBuildingsFixed)
+          .split('"ns0__haspoint"')
+          .join('"children"')
+      );
+      floorBuildingsFixed = JSON.parse(
+        JSON.stringify(floorBuildingsFixed)
+          .split('"ns0__hasassociatedtag"')
+          .join('"location"')
+      );
+      floorBuildingsFixed = JSON.parse(
+        JSON.stringify(floorBuildingsFixed)
+          .split('"ns0__hasValue"')
+          .join('"coordinates"')
+      );
+
       let roomsOnFloor = floorBuildingsFixed.map((x) => {
-        if (x.ns0__islocationof) {
-          return x.ns0__islocationof[0].ns0__islocationof;
+        if (x.children) {
+          return x.children[0].children;
         }
       });
       roomsOnFloor = roomsOnFloor.filter((x) => x !== undefined);
@@ -134,20 +164,18 @@ const Map = (props) => {
 
       const locationObjects = roomsOnFloor.map((x) => {
         const locationObject = JSON.parse(
-          x.ns0__hasassociatedtag[0].ns0__hasValue[0].split("'").join('"')
+          x.location[0].coordinates[0].split("'").join('"')
         );
-        locationObject.title = x.uri;
+        locationObject.title = x.title;
 
         //fixing json for devices
-        locationObject.devices = x.ns0__haslocation.map((device) => {
+        locationObject.children = x.children.map((device) => {
           device.description = JSON.parse(
             device.ns0__hasTag[0].split("'").join('"')
           );
           device.description = device.description.Description;
           device.location = JSON.parse(
-            device.ns0__hasassociatedtag[0].ns0__hasValue[0]
-              .split("'")
-              .join('"')
+            device.location[0].coordinates[0].split("'").join('"')
           );
 
           return device;
@@ -171,7 +199,7 @@ const Map = (props) => {
         x.BottomRightLat = updatedBottomRightCoords.updatedLat;
         let newTitle = x.title.split("/")[x.title.split("/").length - 1];
         newTitle = newTitle.replaceAll("_", " ");
-        x.title = newTitle;
+        x.title = capitalize(newTitle);
         return x;
       });
 
@@ -239,7 +267,6 @@ const Map = (props) => {
   //CURRENTLY WORKING ON
 
   const openPane = (clickedInfo, from) => {
-    console.log(clickedInfo);
     if (
       clickedInfo._type === "Resource:ns0__Zone" ||
       clickedInfo._type === "Resource:ns0__Equipment"
@@ -268,7 +295,6 @@ const Map = (props) => {
   // };
 
   const panToCoords = (deviceInfo) => {
-    console.log(deviceInfo);
     setDeviceMarker(null);
     let location = deviceInfo.location;
     if (Array.isArray(location) && location[0].hasOwnProperty("coordinates")) {
@@ -306,24 +332,24 @@ const Map = (props) => {
 
   //changed x.title to x.uri to make it work for devices
   //when opened from map
-  const getTitleFromJSONDevice = (x) => {
-    let title = x.uri;
-    let newTitle = title.split("/")[title.split("/").length - 1];
-    newTitle = newTitle.replaceAll("_", " ");
-    newTitle += " (Device)";
-    if (x.ns0__hasTag !== undefined) {
-      newTitle +=
-        " (" +
-        JSON.parse(x.ns0__hasTag[0].replace(/'/g, '"')).Description +
-        ")";
-    }
-    return newTitle
-      .split(" ")
-      .map((word) => {
-        return word[0].toUpperCase() + word.substring(1);
-      })
-      .join(" ");
-  };
+  // const getTitleFromJSONDevice = (x) => {
+  //   let title = x.title;
+  //   let newTitle = title.split("/")[title.split("/").length - 1];
+  //   newTitle = newTitle.replaceAll("_", " ");
+  //   newTitle += " (Device)";
+  //   if (x.ns0__hasTag !== undefined) {
+  //     newTitle +=
+  //       " (" +
+  //       JSON.parse(x.ns0__hasTag[0].replace(/'/g, '"')).Description +
+  //       ")";
+  //   }
+  //   return newTitle
+  //     .split(" ")
+  //     .map((word) => {
+  //       return word[0].toUpperCase() + word.substring(1);
+  //     })
+  //     .join(" ");
+  // };
 
   //convert the device json so that they are the same
   const convertDeviceJSON = (deviceJSON) => {
@@ -347,7 +373,6 @@ const Map = (props) => {
 
   //capitalize first letter of word
   const capitalize = (word) => {
-    // console.log(word);
     if (word !== null && word.length > 0) {
       return word
         .split(" ")
@@ -375,7 +400,9 @@ const Map = (props) => {
 
   const DetailsSlider = () => {
     let detailsSliderContent;
-    if (!isLoading && pane.from === "device") {
+
+    //DEVICE SIDE PANE
+    if (!isLoading && pane.info._type === "Resource:ns0__Equipment") {
       let convertedDeviceInfo = convertDeviceJSON(pane.info);
       detailsSliderContent = (
         <>
@@ -391,7 +418,9 @@ const Map = (props) => {
           <ul></ul>
         </>
       );
-    } else if (!isLoading && pane.info._type === "Resource:ns0__Room") {
+    }
+    //ROOM SIDE PANE
+    else if (!isLoading && pane.info._type === "Resource:ns0__Room") {
       let convertedDeviceInfo = convertDeviceJSON(pane.info);
       detailsSliderContent = (
         <>
@@ -406,10 +435,11 @@ const Map = (props) => {
               </SidePaneList>
             );
           })}
-          <ul></ul>
         </>
       );
-    } else if (!isLoading) {
+    }
+    //FLOOR SIDE PANE
+    else if (!isLoading && pane.info._type === "Resource:ns0__Floor") {
       detailsSliderContent = (
         <>
           <Header1>
@@ -417,16 +447,43 @@ const Map = (props) => {
               ? getTitleFromJSON(pane.info)
               : capitalize(pane.info.title)}
           </Header1>
+          <Header2>Rooms</Header2>
+          <SidePaneList>
+            {pane.info.children &&
+              pane.info.children.map((x, index) => {
+                return (
+                  <SidePaneItem
+                    key={index}
+                    onClick={() => openPane(x, "device")}>
+                    {getTitleFromJSON(x)}
+                  </SidePaneItem>
+                );
+              })}
+          </SidePaneList>
+        </>
+      );
+    }
+    //ZONE SIDE PANE
+    else if (!isLoading) {
+      detailsSliderContent = (
+        <>
+          <Header1>
+            {pane.from === "tree"
+              ? getTitleFromJSON(pane.info)
+              : pane.info.title}
+          </Header1>
+
           {pane.from === "tree" ? (
             pane.info._type === "Resource:ns0__Zone" && <SceneMain />
           ) : (
             <SceneMain />
           )}
+
           {pane.info && (pane.info.children || pane.info.devices) && (
             <>
               <Header2>Devices</Header2>
               <SidePaneList>
-                {pane.from === "tree" &&
+                {pane.info.children &&
                   pane.info.children.map((x, index) => {
                     return (
                       <SidePaneItem
@@ -436,22 +493,13 @@ const Map = (props) => {
                       </SidePaneItem>
                     );
                   })}
-                {pane.from === "map" &&
-                  pane.info.devices.map((x, index) => {
-                    return (
-                      <SidePaneItem
-                        key={index}
-                        onClick={() => openPane(x, "device")}>
-                        {getTitleFromJSONDevice(x)}
-                      </SidePaneItem>
-                    );
-                  })}
               </SidePaneList>
             </>
           )}
         </>
       );
     }
+
     if (!isLoading) {
       return (
         <SlidingPanel
