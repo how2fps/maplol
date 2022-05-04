@@ -407,7 +407,7 @@ export const ScheduleListBody = styled.div`
   grid-gap: 0.5rem;
 `;
 
-export const SidePaneDevice = styled.li`
+export const SidePaneItem = styled.li`
   padding: 0.5rem;
   margin-bottom: 0.5rem;
   font-size: 1rem;
@@ -420,7 +420,7 @@ export const SidePaneDevice = styled.li`
   display: flex;
 `;
 
-export const SidePaneDeviceList = styled.ul`
+export const SidePaneList = styled.ul`
   list-style: none;
   padding: 0;
 `;

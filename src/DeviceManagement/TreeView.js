@@ -136,9 +136,6 @@ function TreeView(props) {
   //add parent nodes
   const onNodeClick = (nodeInfo) => {
     const clickedInfo = nodeInfo.node;
-    if (clickedInfo._type === "Resource:ns0__Zone") {
-      props.panToCoords(clickedInfo);
-    }
     if (clickedInfo._type === "Resource:ns0__Equipment") {
       props.openPane(clickedInfo, "device");
     } else {

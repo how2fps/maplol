@@ -25,8 +25,8 @@ import {
   Header1,
   Header2,
   MainContainer,
-  SidePaneDevice,
-  SidePaneDeviceList,
+  SidePaneItem,
+  SidePaneList,
 } from "./styled";
 import TreeView, { getTitleFromJSON } from "./TreeView";
 
@@ -238,15 +238,13 @@ const Map = (props) => {
 
   //CURRENTLY WORKING ON
 
-  //open pane when click on tree
-
-  //open pane when click on map
   const openPane = (clickedInfo, from) => {
     console.log(clickedInfo);
-    if (from === "device") {
+    if (
+      clickedInfo._type === "Resource:ns0__Zone" ||
+      clickedInfo._type === "Resource:ns0__Equipment"
+    ) {
       panToCoords(clickedInfo);
-    }
-    if (clickedInfo._type === "Resource:ns0__Zone") {
       setPane((prevState) => {
         return { ...prevState, open: true, info: clickedInfo, from };
       });
@@ -257,7 +255,6 @@ const Map = (props) => {
     }
   };
 
-  //close side pane
   const closePane = () => {
     setPane((prevState) => {
       return { ...prevState, open: false };
@@ -377,20 +374,11 @@ const Map = (props) => {
   };
 
   const DetailsSlider = () => {
+    let detailsSliderContent;
     if (!isLoading && pane.from === "device") {
       let convertedDeviceInfo = convertDeviceJSON(pane.info);
-      return (
-        <SlidingPanel
-          panelContainerClassName="sliding-panel-container"
-          panelClassName="sliding-panel"
-          SlidingPanel={true}
-          noBackdrop={true}
-          isOpen={pane.open}
-          type="right"
-          size={`${sidePaneSizePercentage * 100}`}>
-          <Button onClick={closePane}>
-            <Icon fontSize="large">close</Icon>
-          </Button>
+      detailsSliderContent = (
+        <>
           <Header1>{getTitleFromJSON(convertedDeviceInfo)}</Header1>
           <Header2>Status</Header2>
           {convertedDeviceInfo.children.map((y, index) => {
@@ -401,7 +389,67 @@ const Map = (props) => {
             );
           })}
           <ul></ul>
-        </SlidingPanel>
+        </>
+      );
+    } else if (!isLoading && pane.info._type === "Resource:ns0__Room") {
+      let convertedDeviceInfo = convertDeviceJSON(pane.info);
+      detailsSliderContent = (
+        <>
+          <Header1>{getTitleFromJSON(convertedDeviceInfo)}</Header1>
+          <Header2>Zones</Header2>
+          {convertedDeviceInfo.children.map((x, index) => {
+            return (
+              <SidePaneList key={index} style={{ width: "100%" }}>
+                <SidePaneItem key={index} onClick={() => openPane(x, "tree")}>
+                  {getTitleFromJSON(x)}
+                </SidePaneItem>
+              </SidePaneList>
+            );
+          })}
+          <ul></ul>
+        </>
+      );
+    } else if (!isLoading) {
+      detailsSliderContent = (
+        <>
+          <Header1>
+            {pane.from === "tree"
+              ? getTitleFromJSON(pane.info)
+              : capitalize(pane.info.title)}
+          </Header1>
+          {pane.from === "tree" ? (
+            pane.info._type === "Resource:ns0__Zone" && <SceneMain />
+          ) : (
+            <SceneMain />
+          )}
+          {pane.info && (pane.info.children || pane.info.devices) && (
+            <>
+              <Header2>Devices</Header2>
+              <SidePaneList>
+                {pane.from === "tree" &&
+                  pane.info.children.map((x, index) => {
+                    return (
+                      <SidePaneItem
+                        key={index}
+                        onClick={() => openPane(x, "device")}>
+                        {getTitleFromJSON(x)}
+                      </SidePaneItem>
+                    );
+                  })}
+                {pane.from === "map" &&
+                  pane.info.devices.map((x, index) => {
+                    return (
+                      <SidePaneItem
+                        key={index}
+                        onClick={() => openPane(x, "device")}>
+                        {getTitleFromJSONDevice(x)}
+                      </SidePaneItem>
+                    );
+                  })}
+              </SidePaneList>
+            </>
+          )}
+        </>
       );
     }
     if (!isLoading) {
@@ -417,43 +465,7 @@ const Map = (props) => {
           <Button onClick={closePane}>
             <Icon fontSize="large">close</Icon>
           </Button>
-          <Header1>
-            {pane.from === "tree"
-              ? getTitleFromJSON(pane.info)
-              : capitalize(pane.info.title)}
-          </Header1>
-          {pane.from === "tree" ? (
-            pane.info._type === "Resource:ns0__Zone" && <SceneMain />
-          ) : (
-            <SceneMain />
-          )}
-          {pane.info && (pane.info.children || pane.info.devices) && (
-            <>
-              <Header2>Devices</Header2>
-              <SidePaneDeviceList>
-                {pane.from === "tree" &&
-                  pane.info.children.map((x, index) => {
-                    return (
-                      <SidePaneDevice
-                        key={index}
-                        onClick={() => openPane(x, "device")}>
-                        {getTitleFromJSON(x)}
-                      </SidePaneDevice>
-                    );
-                  })}
-                {pane.from === "map" &&
-                  pane.info.devices.map((x, index) => {
-                    return (
-                      <SidePaneDevice
-                        key={index}
-                        onClick={() => openPane(x, "device")}>
-                        {getTitleFromJSONDevice(x)}
-                      </SidePaneDevice>
-                    );
-                  })}
-              </SidePaneDeviceList>
-            </>
-          )}
+          {detailsSliderContent}
         </SlidingPanel>
       );
     }
