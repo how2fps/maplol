@@ -408,10 +408,10 @@ const Map = (props) => {
         <>
           <Header1>{getTitleFromJSON(convertedDeviceInfo)}</Header1>
           <Header2>Status</Header2>
-          {convertedDeviceInfo.children.map((y, index) => {
+          {convertedDeviceInfo.children.map((status, index) => {
             return (
               <div key={index} style={{ width: "100%" }}>
-                {y.title}
+                {status.title}
               </div>
             );
           })}
@@ -430,6 +430,14 @@ const Map = (props) => {
             return (
               <SidePaneList key={index} style={{ width: "100%" }}>
                 <SidePaneItem key={index} onClick={() => openPane(x, "tree")}>
+                  <i
+                    style={{
+                      margin: "2px 1rem 0 0",
+                      display: "grid",
+                      alignItems: "center",
+                    }}>
+                    <Icon fontSize="medium">my_location</Icon>
+                  </i>
                   {getTitleFromJSON(x)}
                 </SidePaneItem>
               </SidePaneList>
@@ -455,6 +463,14 @@ const Map = (props) => {
                   <SidePaneItem
                     key={index}
                     onClick={() => openPane(x, "device")}>
+                    <i
+                      style={{
+                        margin: "2px 1rem 0 0",
+                        display: "grid",
+                        alignItems: "center",
+                      }}>
+                      <Icon fontSize="medium">meeting_room</Icon>
+                    </i>
                     {getTitleFromJSON(x)}
                   </SidePaneItem>
                 );
@@ -489,6 +505,14 @@ const Map = (props) => {
                       <SidePaneItem
                         key={index}
                         onClick={() => openPane(x, "device")}>
+                        <div
+                          style={{
+                            margin: "2px 1rem 0 0",
+                            display: "grid",
+                            alignItems: "center",
+                          }}>
+                          <Icon fontSize="medium">sensors</Icon>
+                        </div>
                         {getTitleFromJSON(x)}
                       </SidePaneItem>
                     );
