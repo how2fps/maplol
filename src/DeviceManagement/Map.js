@@ -34,9 +34,7 @@ import TreeView, { getTitleFromJSON } from "./TreeView";
 //z-index issues if it is present so only turn it on when needed
 function ShowCoordsOnClick() {
   useMapEvents({
-    click: (e) => {
-      console.log(e.latlng);
-    },
+    click: (e) => {},
   });
   return null;
 }
@@ -94,15 +92,7 @@ const Map = (props) => {
     const lengths = floorBuildings.map((a) => a.length);
 
     setAmountOfFloors(Math.max(...lengths));
-    //code for select for schools
-    // console.log(state);
-    // if (state) {
-    //   console.log(state);
-    //   setSelectedSchool(state.state);
-    // }
-    // setSchools(SCHOOL_DUMMY_LIST);
     setSchoolData(data);
-    window.history.replaceState({}, document.title);
     setIsLoading(false);
   }, []);
 
@@ -163,10 +153,16 @@ const Map = (props) => {
       roomsOnFloor = roomsOnFloor.flat();
 
       const locationObjects = roomsOnFloor.map((x) => {
+        //where the zone json gets transformed for easier plotting on map
         const locationObject = JSON.parse(
           x.location[0].coordinates[0].split("'").join('"')
         );
         locationObject.title = x.title;
+
+        //added all this fields to allow functions like panToCoords to work
+        //with less checking
+        locationObject._type = x._type;
+        locationObject.location = x.location;
 
         //fixing json for devices
         locationObject.children = x.children.map((device) => {
@@ -180,6 +176,7 @@ const Map = (props) => {
 
           return device;
         });
+        console.log(locationObject);
         return locationObject;
       });
 
@@ -267,6 +264,7 @@ const Map = (props) => {
   //CURRENTLY WORKING ON
 
   const openPane = (clickedInfo, from) => {
+    console.log(clickedInfo);
     if (
       clickedInfo._type === "Resource:ns0__Zone" ||
       clickedInfo._type === "Resource:ns0__Equipment"
@@ -432,7 +430,7 @@ const Map = (props) => {
                 <SidePaneItem key={index} onClick={() => openPane(x, "tree")}>
                   <i
                     style={{
-                      margin: "2px 1rem 0 0",
+                      margin: "0 1rem 0 0",
                       display: "grid",
                       alignItems: "center",
                     }}>
@@ -465,7 +463,7 @@ const Map = (props) => {
                     onClick={() => openPane(x, "device")}>
                     <i
                       style={{
-                        margin: "2px 1rem 0 0",
+                        margin: "0 1rem 0 0",
                         display: "grid",
                         alignItems: "center",
                       }}>
@@ -507,7 +505,7 @@ const Map = (props) => {
                         onClick={() => openPane(x, "device")}>
                         <div
                           style={{
-                            margin: "2px 1rem 0 0",
+                            margin: "0 1rem 0 0",
                             display: "grid",
                             alignItems: "center",
                           }}>

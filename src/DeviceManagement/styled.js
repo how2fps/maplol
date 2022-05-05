@@ -19,12 +19,13 @@ export const SchoolBox = styled.div`
 
 export const FloorArea = styled.div`
   display: flex;
+  margin: 0.5rem 0 1rem;
 `;
 
 export const FloorBox = styled.div`
   padding: 0.5rem;
   font-size: 1rem;
-  margin: 0.5rem;
+  margin-right: 1rem;
   border: 1px solid #676977;
   user-select: none;
   cursor: pointer;
@@ -410,7 +411,7 @@ export const ScheduleListBody = styled.div`
 export const SidePaneItem = styled.li`
   padding: 0.5rem;
   margin-bottom: 0.5rem;
-  font-size: 1rem;
+  font-size: 16px;
   border: 1px solid #676977;
   user-select: none;
   &:hover {
@@ -459,12 +460,12 @@ export const Header2 = styled.h2`
 
 export const MainContainer = styled.div`
   background: #121524;
-  min-height: 90vh;
+  max-height: 80vh;
 `;
 
 export const TreeContainer = styled.div`
   overflow: auto;
-  flex: 1 1 auto;
-  margin: 20px 0 0 0;
+  flex: 1 1 0;
+  margin: 0 0 0 0;
   cursor: grab;
 `;
