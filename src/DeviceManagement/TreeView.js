@@ -56,9 +56,7 @@ function TreeView(props) {
   const ref = useRef();
   const { events } = useScrollOnDrag(ref);
 
-  const { showDevice, hideDevice, expandDevice } = props;
   const [treeData, setTreeData] = useState([]);
-  const [totalWarning, setTotalWarning] = useState(0);
   const [totalDevices, setTotalDevices] = useState(0);
 
   useEffect(() => {
@@ -84,12 +82,12 @@ function TreeView(props) {
       JSON.stringify(newGraphQL).split('"ns0__hasValue"').join('"coordinates"')
     );
     setTotalDevices(getTotalCountByLevel(newGraphQL));
-    // setTotalWarning(getWarningCountByLevel(newGraphQL));
     setTreeData(newGraphQL);
   }, []);
 
   useEffect(() => {
     const arrayOfDifferentBuildings = props.schoolData[0].ns0__islocationof;
+    console.log(arrayOfDifferentBuildings);
     const floorBuildings = arrayOfDifferentBuildings.map((x) => {
       if (x.ns0__islocationof) {
         return x.ns0__islocationof.filter((y) => {
@@ -133,7 +131,6 @@ function TreeView(props) {
     setTreeData(floorBuildingsFixed);
   }, [props.selectedFloor]);
 
-  //add parent nodes
   const onNodeClick = (nodeInfo) => {
     const clickedInfo = nodeInfo.node;
     if (clickedInfo._type === "Resource:ns0__Equipment") {
@@ -176,15 +173,6 @@ function TreeView(props) {
     return localCount;
   };
 
-  const countNotEqualCondition = (obj, conditionKey, conditionValue) => {
-    let localCount = 0;
-    countHolder = 0;
-    conditionNotEqualCounter(obj, conditionKey, conditionValue);
-    localCount = countHolder;
-    countHolder = 0;
-    return localCount;
-  };
-
   const conditionEqualCounter = (obj, conditionKey, conditionValue) => {
     Object.keys(obj).forEach((key) => {
       if (key === conditionKey && obj[key] === conditionValue) {
@@ -222,35 +210,6 @@ function TreeView(props) {
         return "Location";
     }
   };
-
-  // const renderThumb = ({ style, ...props }) => {
-  //   const thumbStyle = {
-  //     backgroundColor: `#a8a9b1
-  //           `,
-  //     borderRadius: `0.5rem`,
-  //   };
-  //   return <div style={{ ...style, ...thumbStyle }} {...props} />;
-  // };
-
-  // const isCharacterALetter = (char) => {
-  //   return /[a-zA-Z]/.test(char);
-  // };
-
-  // const splitProperCase = (data) => {
-  //   if (data.length > 0) {
-  //     let newData = data[0];
-  //     for (let i = 1; i < data.length; i++) {
-  //       if (isCharacterALetter(data[i])) {
-  //         if (data[i] === data[i].toUpperCase()) {
-  //           if (data[i + 1]) newData += " ";
-  //         }
-  //       }
-  //       newData += data[i];
-  //     }
-  //     return newData;
-  //   }
-  //   return data;
-  // };
 
   return (
     <TreeContainer {...events} ref={ref}>

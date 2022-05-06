@@ -15,7 +15,7 @@ const SCHOOL_DUMMY_LIST = [
   {
     id: 1,
     name: "Rivervale's Secondary School",
-    latLng: [1.350392486863305, 103.9361580344195],
+    latLng: [1.3931973396927921, 103.9043809859905],
   },
   {
     id: 2,

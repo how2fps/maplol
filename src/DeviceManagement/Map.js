@@ -15,6 +15,11 @@ import SlidingPanel from "react-sliding-side-panel";
 import { computeToPixels } from "./computeToPixels";
 import { useWindowSize } from "./hooks/useWindowSize";
 import data from "./rivervale.json";
+import floor1 from "./RVPSFloorplans/rvv-floor1_rotated.png";
+import floor2 from "./RVPSFloorplans/rvv-floor2_rotated.png";
+import floor3 from "./RVPSFloorplans/rvv-floor3_rotated.png";
+import floor4 from "./RVPSFloorplans/rvv-floor4_rotated.png";
+import floor5 from "./RVPSFloorplans/rvv-floor5_rotated.png";
 import SceneMain from "./SceneMain";
 import {
   Button,
@@ -94,7 +99,7 @@ const Map = (props) => {
     setAmountOfFloors(Math.max(...lengths));
     setSchoolData(data);
     setIsLoading(false);
-  }, []);
+  }, [map]);
 
   useEffect(() => {
     //Main useEffect to find out all the different zones each floor with updated coords
@@ -201,15 +206,44 @@ const Map = (props) => {
       });
 
       //Loading image "dynamically"
+      // const img = new Image();
+      // // const imgSrc = process.env.PUBLIC_URL + `/RVPSFloorplans/RVPS - FP0${selectedFloor}.png`;
+      // const imgSrc =
+      //   process.env.PUBLIC_URL +
+      //   `/RVPSFloorplans/rvv-floor${selectedFloor}_rotated.png`;
+      // img.src = imgSrc;
+      // await img.decode();
+      // setImageWidth(img.width); //swap this 2 around
+      // setImageHeight(img.height);
+      // setImageSrc(imgSrc);
+      //hardcoded to fix potential error
       const img = new Image();
       // const imgSrc = process.env.PUBLIC_URL + `/RVPSFloorplans/RVPS - FP0${selectedFloor}.png`;
-      const imgSrc =
-        process.env.PUBLIC_URL +
-        `/RVPSFloorplans/rvv-floor${selectedFloor}_rotated.png`;
+      let imgSrc;
+      switch (selectedFloor) {
+        case "1":
+          imgSrc = floor1;
+          break;
+        case "2":
+          imgSrc = floor2;
+          break;
+        case "3":
+          imgSrc = floor3;
+          break;
+        case "4":
+          imgSrc = floor4;
+          break;
+        case "5":
+          imgSrc = floor5;
+          break;
+        default:
+          break;
+      }
+      console.log(imgSrc);
       img.src = imgSrc;
       await img.decode();
-      setImageWidth(img.width); //swap this 2 around
-      setImageHeight(img.height);
+      setImageWidth(4000); //swap this 2 around
+      setImageHeight(4000);
       setImageSrc(imgSrc);
       setZonesList(updatedCoordsObjects);
       // if (!map) {
@@ -455,24 +489,25 @@ const Map = (props) => {
           </Header1>
           <Header2>Rooms</Header2>
           <SidePaneList>
-            {pane.info.children &&
-              pane.info.children.map((x, index) => {
-                return (
-                  <SidePaneItem
-                    key={index}
-                    onClick={() => openPane(x, "device")}>
-                    <i
-                      style={{
-                        margin: "0 1rem 0 0",
-                        display: "grid",
-                        alignItems: "center",
-                      }}>
-                      <Icon fontSize="medium">meeting_room</Icon>
-                    </i>
-                    {getTitleFromJSON(x)}
-                  </SidePaneItem>
-                );
-              })}
+            {pane.info.children
+              ? pane.info.children.map((x, index) => {
+                  return (
+                    <SidePaneItem
+                      key={index}
+                      onClick={() => openPane(x, "device")}>
+                      <i
+                        style={{
+                          margin: "0 1rem 0 0",
+                          display: "grid",
+                          alignItems: "center",
+                        }}>
+                        <Icon fontSize="medium">meeting_room</Icon>
+                      </i>
+                      {getTitleFromJSON(x)}
+                    </SidePaneItem>
+                  );
+                })
+              : ""}
           </SidePaneList>
         </>
       );
@@ -488,12 +523,16 @@ const Map = (props) => {
           </Header1>
 
           {pane.from === "tree" ? (
-            pane.info._type === "Resource:ns0__Zone" && <SceneMain />
+            pane.info._type === "Resource:ns0__Zone" ? (
+              <SceneMain />
+            ) : (
+              ""
+            )
           ) : (
             <SceneMain />
           )}
 
-          {pane.info && (pane.info.children || pane.info.devices) && (
+          {pane.info && (pane.info.children || pane.info.devices) ? (
             <>
               <Header2>Devices</Header2>
               <SidePaneList>
@@ -517,6 +556,8 @@ const Map = (props) => {
                   })}
               </SidePaneList>
             </>
+          ) : (
+            ""
           )}
         </>
       );
@@ -542,6 +583,7 @@ const Map = (props) => {
   };
 
   //CURRENTLY WORKING ON
+
   return (
     <MainContainer>
       <DetailsSlider />
@@ -560,14 +602,15 @@ const Map = (props) => {
             ))}
           </FloorArea>
           <Header2 style={{ marginTop: "20px" }}>Device Tree</Header2>
-          {schoolData && zonesList && (
+          {schoolData && zonesList ? (
             <TreeView
-              panToCoords={panToCoords}
               openPane={openPane}
               plotMarkerOnClick={plotMarkerOnClick}
               selectedFloor={selectedFloor}
               schoolData={schoolData}
             />
+          ) : (
+            ""
           )}
         </Controls>
         <div
@@ -576,7 +619,7 @@ const Map = (props) => {
             width: `${mapSizePercentage * 100}%`,
             background: "white",
           }}>
-          {!isLoading && schoolData && zonesList && (
+          {!isLoading && schoolData && zonesList ? (
             <MapContainer
               maxZoom={6}
               zoom={1}
@@ -602,7 +645,7 @@ const Map = (props) => {
                   [0, imageWidth / 10],
                 ]}
               />
-              {deviceMarker && (
+              {!!deviceMarker ? (
                 <Marker
                   position={deviceMarker}
                   icon={
@@ -613,6 +656,8 @@ const Map = (props) => {
                     })
                   }
                 />
+              ) : (
+                ""
               )}
               {zonesList.map((x, index) => {
                 return (
@@ -643,8 +688,9 @@ const Map = (props) => {
                   </Rectangle>
                 );
               })}
-              <ShowCoordsOnClick />
             </MapContainer>
+          ) : (
+            ""
           )}
         </div>
       </Container>
