@@ -60,6 +60,7 @@ const Map = (props) => {
   const [imageHeight, setImageHeight] = useState(null);
   const [amountOfFloors, setAmountOfFloors] = useState(1);
   const [selectedFloor, setSelectedFloor] = useState("1");
+  const [sidePaneDetails, setSidePaneDetails] = useState("");
   //state management for selected school if using sch select and floor select
   // const [selectedFloorInput, setSelectedFloorInput] = useState();
   // const [selectedSchool, setSelectedSchool] = useState(null);
@@ -430,13 +431,11 @@ const Map = (props) => {
     });
   };
 
-  const DetailsSlider = () => {
-    let detailsSliderContent;
-
+  useEffect(() => {
     //DEVICE SIDE PANE
     if (!isLoading && pane.info._type === "Resource:ns0__Equipment") {
       let convertedDeviceInfo = convertDeviceJSON(pane.info);
-      detailsSliderContent = (
+      setSidePaneDetails(
         <>
           <Header1>{getTitleFromJSON(convertedDeviceInfo)}</Header1>
           <Header2>Status</Header2>
@@ -454,7 +453,7 @@ const Map = (props) => {
     //ROOM SIDE PANE
     else if (!isLoading && pane.info._type === "Resource:ns0__Room") {
       let convertedDeviceInfo = convertDeviceJSON(pane.info);
-      detailsSliderContent = (
+      setSidePaneDetails(
         <>
           <Header1>{getTitleFromJSON(convertedDeviceInfo)}</Header1>
           <Header2>Zones</Header2>
@@ -480,7 +479,7 @@ const Map = (props) => {
     }
     //FLOOR SIDE PANE
     else if (!isLoading && pane.info._type === "Resource:ns0__Floor") {
-      detailsSliderContent = (
+      setSidePaneDetails(
         <>
           <Header1>
             {pane.from === "tree"
@@ -514,7 +513,7 @@ const Map = (props) => {
     }
     //ZONE SIDE PANE
     else if (!isLoading) {
-      detailsSliderContent = (
+      setSidePaneDetails(
         <>
           <Header1>
             {pane.from === "tree"
@@ -562,31 +561,25 @@ const Map = (props) => {
         </>
       );
     }
-
-    if (!isLoading) {
-      return (
-        <SlidingPanel
-          panelContainerClassName="sliding-panel-container"
-          panelClassName="sliding-panel"
-          SlidingPanel={true}
-          noBackdrop={true}
-          isOpen={pane.open}
-          type="right"
-          size={`${sidePaneSizePercentage * 100}`}>
-          <Button onClick={closePane}>
-            <Icon fontSize="large">close</Icon>
-          </Button>
-          {detailsSliderContent}
-        </SlidingPanel>
-      );
-    }
-  };
+  }, [isLoading, pane, openPane]);
 
   //CURRENTLY WORKING ON
 
   return (
     <MainContainer>
-      <DetailsSlider />
+      <SlidingPanel
+        panelContainerClassName="sliding-panel-container"
+        panelClassName="sliding-panel"
+        SlidingPanel={true}
+        noBackdrop={true}
+        isOpen={pane.open}
+        type="right"
+        size={`${sidePaneSizePercentage * 100}`}>
+        <Button onClick={closePane}>
+          <Icon fontSize="large">close</Icon>
+        </Button>
+        {sidePaneDetails}
+      </SlidingPanel>
       <Container>
         <Controls>
           <Header1>{schoolname}</Header1>
