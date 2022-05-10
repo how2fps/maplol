@@ -14,7 +14,6 @@ import SlidingPanel from "react-sliding-side-panel";
 
 import { computeToPixels } from "./computeToPixels";
 import { useWindowSize } from "./hooks/useWindowSize";
-import data from "./rivervale.json";
 import floor1 from "./RVPSFloorplans/rvv-floor1_rotated.png";
 import floor2 from "./RVPSFloorplans/rvv-floor2_rotated.png";
 import floor3 from "./RVPSFloorplans/rvv-floor3_rotated.png";
@@ -34,6 +33,7 @@ import {
   SidePaneList,
 } from "./styled";
 import TreeView, { getTitleFromJSON } from "./TreeView";
+import data from "./xinmin_and_rivervale.json";
 
 //component that logs out latlng when map is clicked
 //z-index issues if it is present so only turn it on when needed
@@ -61,10 +61,6 @@ const Map = (props) => {
   const [amountOfFloors, setAmountOfFloors] = useState(1);
   const [selectedFloor, setSelectedFloor] = useState("1");
   const [sidePaneDetails, setSidePaneDetails] = useState("");
-  //state management for selected school if using sch select and floor select
-  // const [selectedFloorInput, setSelectedFloorInput] = useState();
-  // const [selectedSchool, setSelectedSchool] = useState(null);
-  // const [schools, setSchools] = useState([]);
   const [schoolData, setSchoolData] = useState(null);
   const [zonesList, setZonesList] = useState([]);
   const [deviceMarker, setDeviceMarker] = useState(null);
@@ -86,12 +82,12 @@ const Map = (props) => {
       projection: L.Projection.LonLat,
       transformation: new L.Transformation(1, 0, 1, 0),
     });
-    const arrayOfDifferentBuildings = data[0].ns0__islocationof;
+    const arrayOfDifferentBuildings = data[1].ns0__islocationof;
 
     const floorBuildings = arrayOfDifferentBuildings
       .map((x) => {
-        if (x.ns0__islocationof) {
-          return x.ns0__islocationof;
+        if (x.ns0__haspart) {
+          return x.ns0__haspart;
         }
       })
       .filter((x) => x !== undefined);
@@ -108,11 +104,13 @@ const Map = (props) => {
     const setMapFunc = async () => {
       setIsLoading(true);
 
-      const arrayOfDifferentBuildings = data[0].ns0__islocationof;
+      const graphqlData = await data;
+      const school = graphqlData[1];
+      const arrayOfDifferentBuildings = school.ns0__islocationof;
       const floorBuildings = arrayOfDifferentBuildings.map((x) => {
-        if (x.ns0__islocationof) {
-          return x.ns0__islocationof.filter((y) => {
-            return y.uri.includes(`floor_${selectedFloor}`);
+        if (x._type === "Resource:ns0__Building" && x.ns0__haspart) {
+          return x.ns0__haspart.filter((y) => {
+            return y.uri.includes(`level_${selectedFloor}`);
           });
         }
       });
@@ -141,6 +139,11 @@ const Map = (props) => {
       );
       floorBuildingsFixed = JSON.parse(
         JSON.stringify(floorBuildingsFixed)
+          .split('"ns0__haspart"')
+          .join('"children"')
+      );
+      floorBuildingsFixed = JSON.parse(
+        JSON.stringify(floorBuildingsFixed)
           .split('"ns0__hasassociatedtag"')
           .join('"location"')
       );
@@ -149,10 +152,9 @@ const Map = (props) => {
           .split('"ns0__hasValue"')
           .join('"coordinates"')
       );
-
       let roomsOnFloor = floorBuildingsFixed.map((x) => {
-        if (x.children) {
-          return x.children[0].children;
+        if (x && x.children) {
+          return x.children;
         }
       });
       roomsOnFloor = roomsOnFloor.filter((x) => x !== undefined);
@@ -169,20 +171,23 @@ const Map = (props) => {
         //with less checking
         locationObject._type = x._type;
         locationObject.location = x.location;
-
         //fixing json for devices
-        locationObject.children = x.children.map((device) => {
-          device.description = JSON.parse(
-            device.ns0__hasTag[0].split("'").join('"')
-          );
-          device.description = device.description.Description;
-          device.location = JSON.parse(
-            device.location[0].coordinates[0].split("'").join('"')
-          );
-
-          return device;
-        });
-        console.log(locationObject);
+        if (x.children && x.children.length > 0) {
+          locationObject.children = x.children.map((device) => {
+            if (device && device._type === "Resource:ns0__Equipment") {
+              device.description = JSON.parse(
+                device.ns0__hasTag[0].split("'").join('"')
+              );
+              device.description = device.description.Description;
+              if (device.location) {
+                device.location = JSON.parse(
+                  device.location[0].coordinates[0].split("'").join('"')
+                );
+              }
+            }
+            return device;
+          });
+        }
         return locationObject;
       });
 
@@ -206,20 +211,7 @@ const Map = (props) => {
         return x;
       });
 
-      //Loading image "dynamically"
-      // const img = new Image();
-      // // const imgSrc = process.env.PUBLIC_URL + `/RVPSFloorplans/RVPS - FP0${selectedFloor}.png`;
-      // const imgSrc =
-      //   process.env.PUBLIC_URL +
-      //   `/RVPSFloorplans/rvv-floor${selectedFloor}_rotated.png`;
-      // img.src = imgSrc;
-      // await img.decode();
-      // setImageWidth(img.width); //swap this 2 around
-      // setImageHeight(img.height);
-      // setImageSrc(imgSrc);
-      //hardcoded to fix potential error
       const img = new Image();
-      // const imgSrc = process.env.PUBLIC_URL + `/RVPSFloorplans/RVPS - FP0${selectedFloor}.png`;
       let imgSrc;
       switch (selectedFloor) {
         case "1":
@@ -240,21 +232,13 @@ const Map = (props) => {
         default:
           break;
       }
-      console.log(imgSrc);
       img.src = imgSrc;
       await img.decode();
-      setImageWidth(4000); //swap this 2 around
-      setImageHeight(4000);
+      setImageWidth(img.width); //swap this 2 around
+      setImageHeight(img.height);
       setImageSrc(imgSrc);
       setZonesList(updatedCoordsObjects);
-      // if (!map) {
-      //   setIsLoading(false);
-      //   return;
-      // } else {
       setIsLoading(false);
-      // if (state) onSearchHandler(state);
-      // window.history.replaceState({}, document.title);
-      // }
     };
     setMapFunc();
   }, [selectedFloor]);
@@ -269,39 +253,20 @@ const Map = (props) => {
     );
   }
 
-  //to send data after redirecting
-  // const onSearchHandler = (e) => {
-  //   history.push("../DeviceManagement", { state: e });
-  // };
-
   //floor change after user selects
   const onFloorChange = (e) => {
     setDeviceMarker(null);
     setPane((prevState) => {
       return { ...prevState, open: false };
     });
-    // setSelectedFloorInput(e);
     setSelectedFloor(e.value.key);
-  };
-
-  //not used atm, plots rectangle on map when tree node is clicked on
-  //based on upper left and bottom right latlng
-  const plotMarkerOnClick = (ulLat, ulLong, blLat, blLong) => {
-    const newUpperCoords = computeToPixels({ lat: ulLat, long: ulLong });
-    const newBottomCoords = computeToPixels({ lat: blLat, long: blLong });
-    L.rectangle([
-      newUpperCoords,
-      newBottomCoords,
-      { color: "Red", weight: 1 },
-    ]).addTo(map);
   };
 
   //CURRENTLY WORKING ON
 
   const openPane = (clickedInfo, from) => {
-    console.log(clickedInfo);
     if (
-      clickedInfo._type === "Resource:ns0__Zone" ||
+      clickedInfo._type === "Resource:ns0__Room" ||
       clickedInfo._type === "Resource:ns0__Equipment"
     ) {
       panToCoords(clickedInfo);
@@ -451,32 +416,36 @@ const Map = (props) => {
       );
     }
     //ROOM SIDE PANE
-    else if (!isLoading && pane.info._type === "Resource:ns0__Room") {
-      let convertedDeviceInfo = convertDeviceJSON(pane.info);
-      setSidePaneDetails(
-        <>
-          <Header1>{getTitleFromJSON(convertedDeviceInfo)}</Header1>
-          <Header2>Zones</Header2>
-          {convertedDeviceInfo.children.map((x, index) => {
-            return (
-              <SidePaneList key={index} style={{ width: "100%" }}>
-                <SidePaneItem key={index} onClick={() => openPane(x, "tree")}>
-                  <i
-                    style={{
-                      margin: "0 1rem 0 0",
-                      display: "grid",
-                      alignItems: "center",
-                    }}>
-                    <Icon fontSize="medium">my_location</Icon>
-                  </i>
-                  {getTitleFromJSON(x)}
-                </SidePaneItem>
-              </SidePaneList>
-            );
-          })}
-        </>
-      );
-    }
+    // else if (!isLoading && pane.info._type === "Resource:ns0__Room") {
+    //   let convertedDeviceInfo = convertDeviceJSON(pane.info);
+    //   setSidePaneDetails(
+    //     <>
+    //       <Header1>{getTitleFromJSON(convertedDeviceInfo)}</Header1>
+    //       <Header2>Zones</Header2>
+    //       {convertedDeviceInfo.children
+    //         ? convertedDeviceInfo.children.map((x, index) => {
+    //             return (
+    //               <SidePaneList key={index} style={{ width: "100%" }}>
+    //                 <SidePaneItem
+    //                   key={index}
+    //                   onClick={() => openPane(x, "tree")}>
+    //                   <i
+    //                     style={{
+    //                       margin: "0 1rem 0 0",
+    //                       display: "grid",
+    //                       alignItems: "center",
+    //                     }}>
+    //                     <Icon fontSize="medium">my_location</Icon>
+    //                   </i>
+    //                   {getTitleFromJSON(x)}
+    //                 </SidePaneItem>
+    //               </SidePaneList>
+    //             );
+    //           })
+    //         : ""}
+    //     </>
+    //   );
+    // }
     //FLOOR SIDE PANE
     else if (!isLoading && pane.info._type === "Resource:ns0__Floor") {
       setSidePaneDetails(
@@ -561,7 +530,7 @@ const Map = (props) => {
         </>
       );
     }
-  }, [isLoading, pane, openPane]);
+  }, [isLoading, pane]);
 
   //CURRENTLY WORKING ON
 
@@ -598,7 +567,6 @@ const Map = (props) => {
           {schoolData && zonesList ? (
             <TreeView
               openPane={openPane}
-              plotMarkerOnClick={plotMarkerOnClick}
               selectedFloor={selectedFloor}
               schoolData={schoolData}
             />
@@ -640,12 +608,12 @@ const Map = (props) => {
               />
               {!!deviceMarker ? (
                 <Marker
-                  position={deviceMarker}
+                  position={[deviceMarker[0], deviceMarker[1]]}
                   icon={
                     new L.Icon({
                       iconUrl: markerIconPng,
-                      iconSize: [30, 46],
-                      iconAnchor: [15, 46],
+                      iconSize: [25, 41],
+                      iconAnchor: [12.5, 41],
                     })
                   }
                 />

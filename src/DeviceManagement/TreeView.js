@@ -60,12 +60,15 @@ function TreeView(props) {
   const [totalDevices, setTotalDevices] = useState(0);
 
   useEffect(() => {
-    let newGraphQL = props.schoolData;
+    let newGraphQL = props.schoolData[1];
     newGraphQL = JSON.parse(
       JSON.stringify(newGraphQL).split('"uri"').join('"title"')
     );
     newGraphQL = JSON.parse(
       JSON.stringify(newGraphQL).split('"ns0__islocationof"').join('"children"')
+    );
+    newGraphQL = JSON.parse(
+      JSON.stringify(newGraphQL).split('"ns0__haspart"').join('"children"')
     );
     newGraphQL = JSON.parse(
       JSON.stringify(newGraphQL).split('"ns0__haslocation"').join('"children"')
@@ -86,19 +89,21 @@ function TreeView(props) {
   }, []);
 
   useEffect(() => {
-    const arrayOfDifferentBuildings = props.schoolData[0].ns0__islocationof;
+    const arrayOfDifferentBuildings = props.schoolData[1].ns0__islocationof;
     console.log(arrayOfDifferentBuildings);
     const floorBuildings = arrayOfDifferentBuildings.map((x) => {
-      if (x.ns0__islocationof) {
-        return x.ns0__islocationof.filter((y) => {
-          return y.uri.includes(`floor_${props.selectedFloor}`);
+      if (x.ns0__haspart) {
+        return x.ns0__haspart.filter((y) => {
+          return y.uri.includes(`level_${props.selectedFloor}`);
         });
       }
     });
+    console.log(floorBuildings);
     const filteredUndefineFloorBuilding = floorBuildings.filter(
       (x) => x !== undefined
     );
     let floorBuildingsFixed = filteredUndefineFloorBuilding.map((x) => x[0]);
+
     floorBuildingsFixed = JSON.parse(
       JSON.stringify(floorBuildingsFixed).split('"uri"').join('"title"')
     );

@@ -7,6 +7,7 @@ import markerIconPng from "leaflet/dist/images/marker-icon.png";
 import React, { useEffect, useState } from "react";
 import { MapContainer, Marker, Tooltip } from "react-leaflet";
 import { useHistory, useLocation } from "react-router-dom";
+import Select, { components } from "react-select";
 
 import singaporeGSON from "./SingaporeGSON.json";
 import { Header1, MainContainer, SchoolBox } from "./styled";
@@ -38,13 +39,22 @@ const SCHOOL_DUMMY_LIST = [
     latLng: [1.3486575472899138, 103.73291689579524],
   },
 ];
+
 export default function SingaporeMap() {
+  const { Option } = components;
   const [schools, setSchools] = useState([]);
   const [selectedSchool, setSelectedSchool] = useState(null);
   const position = [1.352083, 103.819839]; //center of SG
   const [map, setMap] = useState(null);
   const history = useHistory();
   const { state } = useLocation();
+
+  const IconOption = (props) => (
+    <Option {...props}>
+      <Icon fontSize="large">apartment</Icon>
+      {props.data.label}
+    </Option>
+  );
 
   useEffect(() => {
     setSchools(SCHOOL_DUMMY_LIST);
@@ -106,24 +116,8 @@ export default function SingaporeMap() {
     <MainContainer>
       <div style={{ display: "flex", flex: "row", width: "100%" }}>
         <div style={{ padding: "20px", width: "40%" }}>
-          <Header1>List of Schools</Header1>
-          {schools.map((school) => (
-            <SchoolBox
-              onClick={() =>
-                onSearchHandler({ value: school.latLng, label: school.name })
-              }>
-              <div
-                style={{
-                  margin: "0 1rem 0 0",
-                  display: "grid",
-                  alignItems: "center",
-                }}>
-                <Icon fontSize="large">apartment</Icon>
-              </div>
-              <div>{school.name}</div>
-            </SchoolBox>
-          ))}
-          {/* <Select
+          <Header1>List of Schools</Header1>{" "}
+          <Select
             style={{ width: "100%", color: "black" }}
             options={schools.map((school) => {
               return { value: school.latLng, label: school.name };
@@ -132,14 +126,27 @@ export default function SingaporeMap() {
             value={selectedSchool}
             minMenuHeight={"10vh"}
             maxMenuHeight={"40vh"}
+            defaultMenuIsOpen
+            menuIsOpen
+            components={{ Option: IconOption }}
+            placeholder="Search for a school..."
             styles={{
               control: (provided, state) => ({
                 ...provided,
                 cursor: "text",
+                fontSize: "24px",
               }),
+              menuList: (provided, state) => ({ ...provided, padding: "0" }),
               option: (provided, state) => ({
                 ...provided,
                 cursor: "pointer",
+                padding: "0.5rem",
+                margin: "0rem",
+                fontSize: "1.5rem",
+                border: "1px solid #676977",
+                userSelect: "none",
+                display: "flex",
+                background: "#121524",
               }),
               dropdownIndicator: (provided, state) => {
                 return {
@@ -149,7 +156,7 @@ export default function SingaporeMap() {
                 };
               },
             }}
-          /> */}
+          />
         </div>
         <MapContainer
           center={position}
