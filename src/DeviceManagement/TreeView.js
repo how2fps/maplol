@@ -116,8 +116,10 @@ function TreeView(props) {
         return x;
       }
     });
+    floorBuildingsFixed = floorBuildingsFixed.filter((x) => {
+      return x !== undefined;
+    });
     console.log(floorBuildingsFixed);
-
     floorBuildingsFixed = JSON.parse(
       JSON.stringify(floorBuildingsFixed).split('"uri"').join('"title"')
     );
