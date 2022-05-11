@@ -265,6 +265,7 @@ const Map = (props) => {
   //CURRENTLY WORKING ON
 
   const openPane = (clickedInfo, from) => {
+    setDeviceMarker(null);
     if (
       clickedInfo._type === "Resource:ns0__Room" ||
       clickedInfo._type === "Resource:ns0__Equipment"
@@ -281,6 +282,10 @@ const Map = (props) => {
   };
 
   const closePane = () => {
+    if (deviceMarker) {
+      console.log(deviceMarker);
+      map.flyTo(deviceMarker, 1.5);
+    }
     setPane((prevState) => {
       return { ...prevState, open: false };
     });
