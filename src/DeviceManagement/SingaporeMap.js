@@ -116,7 +116,7 @@ export default function SingaporeMap() {
     <MainContainer>
       <div style={{ display: "flex", flex: "row", width: "100%" }}>
         <div style={{ padding: "20px", width: "30%" }}>
-          <Header1>List of Schools</Header1>{" "}
+          <Header1>List of Schools</Header1>
           <Select
             style={{ width: "100%", color: "black" }}
             options={schools.map((school) => {
@@ -128,7 +128,11 @@ export default function SingaporeMap() {
             maxMenuHeight={"40vh"}
             defaultMenuIsOpen
             menuIsOpen
-            components={{ Option: IconOption }}
+            components={{
+              Option: IconOption,
+              DropdownIndicator: () => null,
+              IndicatorSeparator: () => null,
+            }}
             placeholder="Search for a school..."
             styles={{
               control: (provided, state) => ({
@@ -136,25 +140,22 @@ export default function SingaporeMap() {
                 cursor: "text",
                 fontSize: "18px",
               }),
-              menuList: (provided, state) => ({ ...provided, padding: "0" }),
+              menuList: (provided, state) => ({
+                ...provided,
+                padding: "0",
+                background: "#121524",
+              }),
               option: (provided, state) => ({
                 ...provided,
                 cursor: "pointer",
                 padding: "0.5rem",
-                margin: "0rem",
+                marginBottom: "0.2rem",
                 fontSize: "1.2rem",
                 border: "1px solid #676977",
                 userSelect: "none",
                 display: "flex",
                 background: "#121524",
               }),
-              dropdownIndicator: (provided, state) => {
-                return {
-                  ...provided,
-                  color: "#121524",
-                  "&:hover": { color: "#121524" },
-                };
-              },
             }}
           />
         </div>
