@@ -100,7 +100,7 @@ function TreeView(props) {
         }
       }
       if (x._type === "Resource:ns0__Equipment") {
-        if (props.selectedFloor === "1" || 1) {
+        if (props.selectedFloor === "1" || props.selectedFloor === 1) {
           return x;
         }
       }

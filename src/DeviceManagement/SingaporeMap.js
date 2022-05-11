@@ -115,7 +115,7 @@ export default function SingaporeMap() {
   return (
     <MainContainer>
       <div style={{ display: "flex", flex: "row", width: "100%" }}>
-        <div style={{ padding: "20px", width: "40%" }}>
+        <div style={{ padding: "20px", width: "30%" }}>
           <Header1>List of Schools</Header1>{" "}
           <Select
             style={{ width: "100%", color: "black" }}
@@ -134,7 +134,7 @@ export default function SingaporeMap() {
               control: (provided, state) => ({
                 ...provided,
                 cursor: "text",
-                fontSize: "24px",
+                fontSize: "18px",
               }),
               menuList: (provided, state) => ({ ...provided, padding: "0" }),
               option: (provided, state) => ({
@@ -142,7 +142,7 @@ export default function SingaporeMap() {
                 cursor: "pointer",
                 padding: "0.5rem",
                 margin: "0rem",
-                fontSize: "1.5rem",
+                fontSize: "1.2rem",
                 border: "1px solid #676977",
                 userSelect: "none",
                 display: "flex",
@@ -165,7 +165,7 @@ export default function SingaporeMap() {
           zoom={11}
           style={{
             height: "90vh",
-            width: "60%",
+            width: "70%",
             background: "white",
             border: "2px solid black",
           }}
