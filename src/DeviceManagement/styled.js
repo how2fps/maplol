@@ -156,6 +156,7 @@ export const TreeNodeSensorCounter = styled.div`
   display: grid;
   align-items: center;
   justify-items: center;
+  margin-left: 0.2rem;
   width: 2.5rem;
 `;
 export const TreeNodeWarningCounter = styled(TreeNodeSensorCounter)`
@@ -163,9 +164,7 @@ export const TreeNodeWarningCounter = styled(TreeNodeSensorCounter)`
 `;
 
 export const TreeNodeIcon = styled.div`
-  display: grid;
-  align-items: center;
-  justify-items: center;
+  display: flex;
   margin: 0rem 0.25rem;
 `;
 
@@ -468,4 +467,9 @@ export const TreeContainer = styled.div`
   flex: 1 1 0;
   margin: 0 0 0 0;
   cursor: grab;
+`;
+export const ScaffoldBlock = styled.div`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
 `;

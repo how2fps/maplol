@@ -491,7 +491,7 @@ const Map = (props) => {
           </Header1>
 
           {pane.from === "tree" ? (
-            pane.info._type === "Resource:ns0__Zone" ? (
+            pane.info._type === "Resource:ns0__Room" ? (
               <SceneMain />
             ) : (
               ""
