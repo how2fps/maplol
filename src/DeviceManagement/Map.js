@@ -47,8 +47,6 @@ function ShowCoordsOnClick() {
 const Map = (props) => {
   const mapSizePercentage = 0.6;
   const sidePaneSizePercentage = 0.3;
-  // const sidePaneRef = useRef(null);
-  // const mapRef = useRef(null);
 
   const { schoolname } = useParams();
 
@@ -62,6 +60,7 @@ const Map = (props) => {
   const [selectedFloor, setSelectedFloor] = useState("1");
   const [sidePaneDetails, setSidePaneDetails] = useState("");
   const [schoolData, setSchoolData] = useState(null);
+  const [mapZoom, setMapZoom] = useState(1);
   const [zonesList, setZonesList] = useState([]);
   const [deviceMarker, setDeviceMarker] = useState(null);
   //error happens if title isn't intialised at state, due to slider library possibly
@@ -322,14 +321,14 @@ const Map = (props) => {
     updatedLongLat = computeToPixels({ long, lat });
     setDeviceMarker([updatedLongLat.updatedLat, updatedLongLat.updatedLong]);
     //zoom level when finding devices
-    const mapZoom = 2;
+    const fixedMapZoom = 2;
     const mapWidth = windowSize.width * mapSizePercentage;
     const paneWidth = windowSize.width * sidePaneSizePercentage;
-    const offsetZoomMultipler = Math.pow(mapZoom, 2);
+    const offsetZoomMultipler = Math.pow(fixedMapZoom, 2);
     const offsetSize = (mapWidth - paneWidth) / 2 / offsetZoomMultipler;
     map.flyTo(
       [updatedLongLat.updatedLat, updatedLongLat.updatedLong + offsetSize],
-      mapZoom
+      fixedMapZoom
     );
   };
 
@@ -539,6 +538,18 @@ const Map = (props) => {
 
   //CURRENTLY WORKING ON
 
+  const MapEvents = () => {
+    useMapEvents({
+      zoomend() {
+        // zoom event (when zoom animation ended)
+        const zoom = map.getZoom(); // get current Zoom of map
+        console.log(zoom);
+        setMapZoom(zoom);
+      },
+    });
+    return false;
+  };
+
   return (
     <MainContainer>
       <SlidingPanel
@@ -587,8 +598,12 @@ const Map = (props) => {
           }}>
           {!isLoading && schoolData && zonesList ? (
             <MapContainer
+              onzoomend={() => {
+                console.log("zoomin");
+                setMapZoom(map.getZoom());
+              }}
               maxZoom={6}
-              zoom={1}
+              zoom={mapZoom}
               minZoom={0.1}
               crs={L.CRS.XY}
               center={[imageHeight / 10 / 2, imageWidth / 10 / 2]}
@@ -604,6 +619,7 @@ const Map = (props) => {
               }
               zoomControl={false}
               whenCreated={setMap}>
+              <MapEvents />
               <ImageOverlay
                 url={imageSrc}
                 bounds={[
@@ -650,7 +666,15 @@ const Map = (props) => {
                           openPane(x, "map");
                         },
                       }}
-                      icon={nameOfZoneAsIcon(x)}></Marker>
+                      icon={
+                        mapZoom >= 1.5
+                          ? nameOfZoneAsIcon(x)
+                          : new L.Icon({
+                              iconUrl: markerIconPng,
+                              iconSize: [25, 41],
+                              iconAnchor: [12.5, 41],
+                            })
+                      }></Marker>
                   </Rectangle>
                 );
               })}

@@ -473,3 +473,14 @@ export const ScaffoldBlock = styled.div`
   flex-direction: row;
   align-items: center;
 `;
+
+export const TreeViewButton = styled.button`
+  font-size: 1.2rem;
+  background: #121524;
+  cursor: pointer;
+  border: 1px solid #676977;
+  padding: 0.5rem;
+  &:hover {
+    background-color: #3f4252;
+  }
+`;

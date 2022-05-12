@@ -3,8 +3,16 @@ import "react-sortable-tree/style.css";
 import { Icon } from "@material-ui/core";
 import React, { useEffect, useRef, useState } from "react";
 import useScrollOnDrag from "react-scroll-ondrag";
+import { toggleExpandedForAll } from "react-sortable-tree";
 
-import { MySortableTree, ScaffoldBlock, TreeContainer, TreeNodeIcon, TreeNodeSensorCounter } from "./styled.js";
+import {
+  MySortableTree,
+  ScaffoldBlock,
+  TreeContainer,
+  TreeNodeIcon,
+  TreeNodeSensorCounter,
+  TreeViewButton,
+} from "./styled.js";
 
 let countHolder = 0;
 
@@ -58,6 +66,7 @@ function TreeView(props) {
 
   const [treeData, setTreeData] = useState([]);
   const [totalDevices, setTotalDevices] = useState(0);
+  const [expandTree, setExpandTree] = useState(false);
 
   useEffect(() => {
     let newGraphQL = props.schoolData[1];
@@ -154,8 +163,29 @@ function TreeView(props) {
         .join('"coordinates"')
     );
     setTotalDevices(getTotalCountByLevel(floorBuildingsFixed));
+    floorBuildingsFixed = floorBuildingsFixed.map((node) => ({
+      ...node,
+      expanded: false,
+    }));
     setTreeData(floorBuildingsFixed);
   }, [props.selectedFloor]);
+
+  useEffect(() => {
+    setTreeData((treeData) => {
+      const updatedTreeData = treeData.map((node) => ({
+        ...node,
+        expanded: expandTree,
+      }));
+      return updatedTreeData;
+    });
+  }, [expandTree]);
+
+  const expandAllNodes = () => {
+    setExpandTree(true);
+  };
+  const collapseAllNodes = () => {
+    setExpandTree(false);
+  };
 
   const onNodeClick = (nodeInfo) => {
     const clickedInfo = nodeInfo.node;
@@ -315,33 +345,44 @@ function TreeView(props) {
   };
 
   return (
-    <TreeContainer {...events} ref={ref}>
-      <MySortableTree
-        canDrag={false}
-        isVirtualized={false}
-        treeData={treeData}
-        onChange={(treeData) => setTreeData(treeData)}
-        scaffoldBlockPxWidth={44}
-        generateNodeProps={(nodeInfo) => ({
-          title: titleComponent(nodeInfo),
-          onClick: () => onNodeClick(nodeInfo),
-          buttons: [
-            getGraphObjectType(nodeInfo.node) === "Floor" ||
-            getGraphObjectType(nodeInfo.node) === "Zone" ||
-            getGraphObjectType(nodeInfo.node) === "Room" ||
-            getGraphObjectType(nodeInfo.node) === "Location"
-              ? [
-                  <TreeNodeIcon>
-                    <TreeNodeSensorCounter>
-                      {getTotalCountByLevel(nodeInfo.node)}
-                    </TreeNodeSensorCounter>
-                  </TreeNodeIcon>,
-                ]
-              : [],
-          ],
-        })}
-      />
-    </TreeContainer>
+    <>
+      <div>
+        <TreeViewButton
+          style={{ marginRight: "1rem" }}
+          onClick={expandAllNodes}>
+          Expand All
+        </TreeViewButton>
+        <TreeViewButton onClick={collapseAllNodes}>Collapse All</TreeViewButton>
+      </div>
+      <TreeContainer {...events} ref={ref}>
+        <MySortableTree
+          toggleExpandedForAll={true}
+          canDrag={false}
+          isVirtualized={false}
+          treeData={treeData}
+          onChange={(treeData) => setTreeData(treeData)}
+          scaffoldBlockPxWidth={44}
+          generateNodeProps={(nodeInfo) => ({
+            title: titleComponent(nodeInfo),
+            onClick: () => onNodeClick(nodeInfo),
+            buttons: [
+              getGraphObjectType(nodeInfo.node) === "Floor" ||
+              getGraphObjectType(nodeInfo.node) === "Zone" ||
+              getGraphObjectType(nodeInfo.node) === "Room" ||
+              getGraphObjectType(nodeInfo.node) === "Location"
+                ? [
+                    <TreeNodeIcon>
+                      <TreeNodeSensorCounter>
+                        {getTotalCountByLevel(nodeInfo.node)}
+                      </TreeNodeSensorCounter>
+                    </TreeNodeIcon>,
+                  ]
+                : [],
+            ],
+          })}
+        />
+      </TreeContainer>
+    </>
   );
 }
 
