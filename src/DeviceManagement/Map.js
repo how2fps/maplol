@@ -8,7 +8,7 @@ import { Icon } from "@material-ui/core";
 import L, { LatLngBounds } from "leaflet";
 import markerIconPng from "leaflet/dist/images/marker-icon.png";
 import React, { useEffect, useState } from "react";
-import { ImageOverlay, MapContainer, Marker, Rectangle, useMapEvents } from "react-leaflet";
+import { Circle, ImageOverlay, MapContainer, Marker, useMapEvents } from "react-leaflet";
 import { useParams } from "react-router-dom";
 import SlidingPanel from "react-sliding-side-panel";
 
@@ -559,6 +559,16 @@ const Map = (props) => {
     return false;
   };
 
+  const zoneCircleRadius = (brLat, ulLat, brLong, ulLong) => {
+    let radius;
+    if (brLat - ulLat > brLong - ulLong) {
+      radius = brLong - ulLong;
+    } else {
+      radius = brLat - ulLat;
+    }
+    radius = radius * 0.5;
+    return radius;
+  };
   return (
     <MainContainer>
       <SlidingPanel
@@ -652,7 +662,7 @@ const Map = (props) => {
               )}
               {zonesList.map((x, index) => {
                 return (
-                  <Rectangle
+                  <Circle
                     key={index}
                     eventHandlers={{
                       click: () => {
@@ -660,10 +670,16 @@ const Map = (props) => {
                       },
                     }}
                     stroke={false}
-                    bounds={[
-                      [x.UpperLeftLat, x.UpperLeftLong],
-                      [x.BottomRightLat, x.BottomRightLong],
-                    ]}>
+                    center={[
+                      (x.UpperLeftLat + x.BottomRightLat) / 2,
+                      (x.BottomRightLong + x.UpperLeftLong) / 2,
+                    ]}
+                    radius={zoneCircleRadius(
+                      x.BottomRightLat,
+                      x.UpperLeftLat,
+                      x.BottomRightLong,
+                      x.UpperLeftLong
+                    )}>
                     <Marker
                       key={index}
                       position={[
@@ -684,7 +700,7 @@ const Map = (props) => {
                               iconAnchor: [12.5, 41],
                             })
                       }></Marker>
-                  </Rectangle>
+                  </Circle>
                 );
               })}
             </MapContainer>
