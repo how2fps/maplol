@@ -3,7 +3,6 @@ import "react-sortable-tree/style.css";
 import { Icon } from "@material-ui/core";
 import React, { useEffect, useRef, useState } from "react";
 import useScrollOnDrag from "react-scroll-ondrag";
-import { toggleExpandedForAll } from "react-sortable-tree";
 
 import {
   MySortableTree,
@@ -67,6 +66,7 @@ function TreeView(props) {
   const [treeData, setTreeData] = useState([]);
   const [totalDevices, setTotalDevices] = useState(0);
   const [expandTree, setExpandTree] = useState(false);
+  const [toggleExpandTree, setToggleExpandTree] = useState(false);
 
   useEffect(() => {
     let newGraphQL = props.schoolData[1];
@@ -178,13 +178,15 @@ function TreeView(props) {
       }));
       return updatedTreeData;
     });
-  }, [expandTree]);
+  }, [expandTree, toggleExpandTree]);
 
   const expandAllNodes = () => {
     setExpandTree(true);
+    setToggleExpandTree((prevState) => !prevState);
   };
   const collapseAllNodes = () => {
     setExpandTree(false);
+    setToggleExpandTree((prevState) => !prevState);
   };
 
   const onNodeClick = (nodeInfo) => {

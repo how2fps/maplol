@@ -297,39 +297,49 @@ const Map = (props) => {
   // };
 
   const panToCoords = (deviceInfo) => {
+    console.log(deviceInfo);
     setDeviceMarker(null);
-    let location = deviceInfo.location;
-    if (Array.isArray(location) && location[0].hasOwnProperty("coordinates")) {
-      location = location[0].coordinates[0];
-      //to solve errors found in JSON so it's parseable
-      location = location.split("'BottomRightLat: ").join("'BottomRightLat': ");
-      location = location.split(", ,").join(",");
-      location = location.split(",}").join("}");
-      location = JSON.parse(location.split("'").join('"'));
-      deviceInfo.location = location;
-    }
-    let long;
-    let lat;
-    let updatedLongLat;
-    if (location.Type === "AreaCoordinate") {
-      long = (location.UpperLeftLong + location.BottomRightLong) / 2;
-      lat = (location.UpperLeftLat + location.BottomRightLat) / 2;
+    if (deviceInfo.location) {
+      let location = deviceInfo.location;
+      if (
+        Array.isArray(location) &&
+        location[0].hasOwnProperty("coordinates")
+      ) {
+        location = location[0].coordinates[0];
+        //to solve errors found in JSON so it's parseable
+        location = location
+          .split("'BottomRightLat: ")
+          .join("'BottomRightLat': ");
+        location = location.split(", ,").join(",");
+        location = location.split(",}").join("}");
+        location = JSON.parse(location.split("'").join('"'));
+        deviceInfo.location = location;
+      }
+      let long;
+      let lat;
+      let updatedLongLat;
+      if (location.Type === "AreaCoordinate") {
+        long = (location.UpperLeftLong + location.BottomRightLong) / 2;
+        lat = (location.UpperLeftLat + location.BottomRightLat) / 2;
+      } else {
+        long = deviceInfo.location.Longtitude;
+        lat = deviceInfo.location.Latitude;
+      }
+      updatedLongLat = computeToPixels({ long, lat });
+      setDeviceMarker([updatedLongLat.updatedLat, updatedLongLat.updatedLong]);
+      //zoom level when finding devices
+      const fixedMapZoom = 2;
+      const mapWidth = windowSize.width * mapSizePercentage;
+      const paneWidth = windowSize.width * sidePaneSizePercentage;
+      const offsetZoomMultipler = Math.pow(fixedMapZoom, 2);
+      const offsetSize = (mapWidth - paneWidth) / 2 / offsetZoomMultipler;
+      map.flyTo(
+        [updatedLongLat.updatedLat, updatedLongLat.updatedLong + offsetSize],
+        fixedMapZoom
+      );
     } else {
-      long = deviceInfo.location.Longtitude;
-      lat = deviceInfo.location.Latitude;
+      console.log("no location yet");
     }
-    updatedLongLat = computeToPixels({ long, lat });
-    setDeviceMarker([updatedLongLat.updatedLat, updatedLongLat.updatedLong]);
-    //zoom level when finding devices
-    const fixedMapZoom = 2;
-    const mapWidth = windowSize.width * mapSizePercentage;
-    const paneWidth = windowSize.width * sidePaneSizePercentage;
-    const offsetZoomMultipler = Math.pow(fixedMapZoom, 2);
-    const offsetSize = (mapWidth - paneWidth) / 2 / offsetZoomMultipler;
-    map.flyTo(
-      [updatedLongLat.updatedLat, updatedLongLat.updatedLong + offsetSize],
-      fixedMapZoom
-    );
   };
 
   //changed x.title to x.uri to make it work for devices
@@ -543,7 +553,6 @@ const Map = (props) => {
       zoomend() {
         // zoom event (when zoom animation ended)
         const zoom = map.getZoom(); // get current Zoom of map
-        console.log(zoom);
         setMapZoom(zoom);
       },
     });
