@@ -480,7 +480,17 @@ export const TreeViewButton = styled.button`
   cursor: pointer;
   border: 1px solid #676977;
   padding: 0.5rem;
+  width: 100%;
   &:hover {
     background-color: #3f4252;
   }
+`;
+
+export const TreeViewControls = styled.button`
+  display: flex;
+  width: 100%;
+  background: #121524;
+  border: none;
+  padding: 0;
+  margin-bottom: 0.2rem;
 `;

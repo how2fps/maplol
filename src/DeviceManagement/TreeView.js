@@ -11,6 +11,7 @@ import {
   TreeNodeIcon,
   TreeNodeSensorCounter,
   TreeViewButton,
+  TreeViewControls,
 } from "./styled.js";
 
 let countHolder = 0;
@@ -348,14 +349,14 @@ function TreeView(props) {
 
   return (
     <>
-      <div>
+      <TreeViewControls>
         <TreeViewButton
           style={{ marginRight: "1rem" }}
           onClick={expandAllNodes}>
           Expand All
         </TreeViewButton>
         <TreeViewButton onClick={collapseAllNodes}>Collapse All</TreeViewButton>
-      </div>
+      </TreeViewControls>
       <TreeContainer {...events} ref={ref}>
         <MySortableTree
           toggleExpandedForAll={true}

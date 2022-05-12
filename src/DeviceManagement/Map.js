@@ -328,7 +328,7 @@ const Map = (props) => {
       updatedLongLat = computeToPixels({ long, lat });
       setDeviceMarker([updatedLongLat.updatedLat, updatedLongLat.updatedLong]);
       //zoom level when finding devices
-      const fixedMapZoom = 2;
+      const fixedMapZoom = 3;
       const mapWidth = windowSize.width * mapSizePercentage;
       const paneWidth = windowSize.width * sidePaneSizePercentage;
       const offsetZoomMultipler = Math.pow(fixedMapZoom, 2);
